@@ -17,7 +17,7 @@ export class init {
     private readonly db;
 
     @Container.inject(Container.Identifiers.PluginConfiguration)
-    @Container.tagged("plugin", "@cactus1549/telegram-bot")
+    @Container.tagged("plugin", "@cactus1549/ark-monitor")
     private readonly configuration!: Providers.PluginConfiguration;
     
     

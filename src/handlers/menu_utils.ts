@@ -14,7 +14,7 @@ export class menu_utils {
     private readonly db;
 
     @Container.inject(Container.Identifiers.PluginConfiguration)
-    @Container.tagged("plugin", "@cactus1549/telegram-bot")
+    @Container.tagged("plugin", "@cactus1549/ark-monitor")
     private readonly configuration!: Providers.PluginConfiguration;
 
     public async handle_back(ctx: UContext, number_back: number, text: string, callback){

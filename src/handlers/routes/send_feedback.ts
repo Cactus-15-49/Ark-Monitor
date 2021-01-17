@@ -9,7 +9,7 @@ export class send_feedback {
     private readonly menu_utils;
 
     @Container.inject(Container.Identifiers.PluginConfiguration)
-    @Container.tagged("plugin", "@cactus1549/telegram-bot")
+    @Container.tagged("plugin", "@cactus1549/ark-monitor")
     private readonly configuration!: Providers.PluginConfiguration;
 
 
