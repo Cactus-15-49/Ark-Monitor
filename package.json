@@ -1,4 +1,4 @@
-                                                                                                                                          {
+{
     "private": true,
     "name": "@cactus1549/ark-monitor",
     "description": "Provides a Telegram Bot for Ark Core",
@@ -30,6 +30,7 @@
     "dependencies": {
         "@arkecosystem/core-kernel": "^3.0.0-next.2",
         "mongoose": "^5.11.12",
+        "node-fetch": "^2.6.1",
         "telegraf": "^3.38.0"
     },
     "devDependencies": {
@@ -52,5 +53,3 @@
         "preset": "../../jest-preset.json"
     }
 }
-
-

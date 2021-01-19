@@ -1,3 +1,5 @@
+import { fetch } from "node-fetch";
+
 
 export let coingecko_request = async (ticker: string | undefined) => {
     if (ticker === undefined) return undefined;
