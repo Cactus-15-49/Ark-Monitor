@@ -2,6 +2,7 @@ import { Container, Contracts, Utils, Providers } from "@arkecosystem/core-kerne
 import { Managers } from "@arkecosystem/crypto";
 import { Markup } from "telegraf";
 import { BigIntToString } from "../../Utils/utils";
+import { coingecko_request } from "../../Utils/coingecko";
 import { UContext, missed_block } from "../../interfaces";
 
 @Container.injectable()
@@ -38,13 +39,14 @@ export class menu {
 
     
 
-    public balance = (ctx: UContext) =>  {
+    public balance = async (ctx: UContext) =>  {
         let total_value_usd = Utils.BigNumber.ZERO;
         let total_value_btc = Utils.BigNumber.ZERO;
         let total_balance = Utils.BigNumber.ZERO;
         let answer: string = "";
         let i = 0;
-        const cmc = false;//const cmc = r.cmc_request()
+        const cmc = await coingecko_request(this.get_coingecko_ticker());
+        
         for (let db_wallet of ctx.user.voters){
             i++;
             let wallet: Contracts.State.Wallet = this.wallets.findByAddress(db_wallet.address);
@@ -59,10 +61,10 @@ export class menu {
             }
 
             answer += `\nBalance: ${this.get_symbol()} ${BigIntToString(balance, 2)}\nWorth: `;
-            if (cmc){
-                let value_usd = balance.times(cmc["market_data"]["current_price"]["usd"])
+            if (cmc !== undefined){
+                let value_usd = balance.times(cmc.market_data.current_price.usd)
                 total_value_usd = total_value_usd.plus(value_usd);
-                let value_btc = balance.times(cmc["market_data"]["current_price"]["btc"])
+                let value_btc = balance.times(cmc.market_data.current_price.btc)
                 total_value_btc = total_value_btc.plus(value_btc);
                 answer += `${BigIntToString(value_btc, 2)} BTC ($${BigIntToString(value_usd, 2)})\n`
             }else{
@@ -90,7 +92,7 @@ export class menu {
         if (ctx.user.voters.length > 1){
             answer += "\n------------------------------------------------------------------\n";
             answer += `Total balance: ${this.get_symbol()}${BigIntToString(total_balance, 2)}\nWorth: `;
-            if (cmc){
+            if (cmc !== undefined){
                 answer += `${BigIntToString(total_value_btc, 2)} BTC ($${BigIntToString(total_value_usd, 2)})`;
             }
             else{
@@ -161,25 +163,25 @@ export class menu {
         ctx.reply(`Which wallet do you want to check the transactions?`,  {reply_markup: Markup.keyboard(keyboard)});
     }
     
-    public price = (ctx: UContext) =>  {
-        let cmc = false;//let cmc = r.cmc_request()
-        if (!cmc){
+    public price = async (ctx: UContext) =>  {
+        const cmc = await coingecko_request(this.get_coingecko_ticker());
+        if (cmc === undefined){
             ctx.reply("There are problems with CoinGecko. Try again later.", {reply_markup: Markup.inlineKeyboard([Markup.callbackButton("Update", "update_price")])});
             return;
         }
         else{
-            cmc = cmc["market_data"];
+            const data = cmc.market_data;
         
-            let price = cmc["market_data"]["current_price"]["usd"]
-            let price_btc = cmc["market_data"]["current_price"]["btc"]
-            let volume = cmc["market_data"]["total_volume"]["usd"]
-            let volume_btc = cmc["market_data"]["total_volume"]["btc"]
-            let market_cap = cmc["market_data"]["market_cap"]["usd"]
-            let market_cap_btc = cmc["market_data"]["market_cap"]["btc"]
-            let change_24h = cmc["market_data"]["price_change_percentage_24h"]
-            let change_7d = cmc["market_data"]["price_change_percentage_7d"]
-            let circulating = cmc["market_data"]["circulating_supply"]
-            let total_supply = 0 //int(r.bc_request("blockchain")["data"]["supply"])/100000000
+            let price = data.current_price.usd
+            let price_btc = data.current_price.btc
+            let volume = data.total_volume.usd
+            let volume_btc = data.total_volume.btc
+            let market_cap = data.market_cap.usd
+            let market_cap_btc = data.market_cap.btc
+            let change_24h = data.price_change_percentage_24h
+            let change_7d = data.price_change_percentage_7d
+            let circulating = data.circulating_supply
+            let total_supply = data.total_supply
             
             ctx.reply(`${this.get_symbol()} STATS:\nPrice: ${price_btc} BTC ($${price})\nMarket cap: ${market_cap_btc} BTC ($${market_cap})\nVolume: ${volume_btc} BTC ($${volume})\n24h change: ${change_24h}%\n7d change: ${change_7d}%\nCirculating supply: ${this.get_symbol()}${circulating}\nTotal supply: ${this.get_symbol()}${total_supply}\n`, {reply_markup: Markup.inlineKeyboard([Markup.callbackButton("Update", "update_price")])})
         }
@@ -487,5 +489,11 @@ export class menu {
 
     private get_symbol(){
         return Managers.configManager.get("network").client.symbol;
+    }
+
+    private get_coingecko_ticker(): string | undefined {
+        let ticker = this.configuration.get("ticker");
+        if (ticker === undefined || typeof ticker !== "string") return undefined;
+        return ticker;
     }
 }

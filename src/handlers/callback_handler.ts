@@ -1,6 +1,7 @@
-import { Container, Contracts } from "@arkecosystem/core-kernel";
+import { Container, Contracts, Providers } from "@arkecosystem/core-kernel";
 import { Managers, Interfaces } from "@arkecosystem/crypto";
 import { Extra } from "telegraf";
+import { coingecko_request } from "../Utils/coingecko";
 import { UContext } from "../interfaces";
 
 
@@ -9,6 +10,10 @@ export class callback_handler{
 
     @Container.inject(Container.Identifiers.TransactionHistoryService)
     private readonly transactionHistoryService!: Contracts.Shared.TransactionHistoryService;
+
+    @Container.inject(Container.Identifiers.PluginConfiguration)
+    @Container.tagged("plugin", "@cactus1549/ark-monitor")
+    private readonly configuration!: Providers.PluginConfiguration;
 
     @Container.inject(Symbol.for("menu"))
     private readonly menu;
@@ -37,31 +42,41 @@ export class callback_handler{
 
     }
 
-    private update_price = (ctx: UContext) => {
-        let cmc = false;//let cmc = r.cmc_request()
-        if (!cmc){
-            ctx.editMessageText(`There are problems with CoinGecko. Try again later.`, Extra.markup((m) => m.inlineKeyboard([
-                m.callbackButton("Update", "update_price")
-              ])));
+    private update_price = async (ctx: UContext) => {
+        const cmc = await coingecko_request(this.get_coingecko_ticker());
+        if (cmc === undefined){
+            let message = `There are problems with CoinGecko. Try again later`
+            let keyboard = Extra.markup((m) => m.inlineKeyboard([m.callbackButton("Update", "update_price")]))
+            try{
+                ctx.editMessageText(message, keyboard);
+            }catch(e){
+                ctx.editMessageText(message + ".", keyboard);
+            }
             return;
         }
         else{
-            cmc = cmc["market_data"];
+            const data = cmc.market_data;
         
-            let price = cmc["market_data"]["current_price"]["usd"]
-            let price_btc = cmc["market_data"]["current_price"]["btc"]
-            let volume = cmc["market_data"]["total_volume"]["usd"]
-            let volume_btc = cmc["market_data"]["total_volume"]["btc"]
-            let market_cap = cmc["market_data"]["market_cap"]["usd"]
-            let market_cap_btc = cmc["market_data"]["market_cap"]["btc"]
-            let change_24h = cmc["market_data"]["price_change_percentage_24h"]
-            let change_7d = cmc["market_data"]["price_change_percentage_7d"]
-            let circulating = cmc["market_data"]["circulating_supply"]
-            let total_supply = 0 //int(r.bc_request("blockchain")["data"]["supply"])/100000000
+            let price = data.current_price.usd
+            let price_btc = data.current_price.btc
+            let volume = data.total_volume.usd
+            let volume_btc = data.total_volume.btc
+            let market_cap = data.market_cap.usd
+            let market_cap_btc = data.market_cap.btc
+            let change_24h = data.price_change_percentage_24h
+            let change_7d = data.price_change_percentage_7d
+            let circulating = data.circulating_supply
+            let total_supply = data.total_supply
             
-            ctx.editMessageText(`${this.network.client.symbol} STATS:\nPrice: ${price_btc} BTC ($${price})\nMarket cap: ${market_cap_btc} BTC ($${market_cap})\nVolume: ${volume_btc} BTC ($${volume})\n24h change: ${change_24h}%\n7d change: ${change_7d}%\nCirculating supply: ${this.network.client.symbol}${circulating}\nTotal supply: ${this.network.client.symbol}${total_supply}\n`, Extra.markup((m) => m.inlineKeyboard([
+            let message = `${this.network.client.symbol} STATS:\nPrice: ${price_btc} BTC ($${price})\nMarket cap: ${market_cap_btc} BTC ($${market_cap})\nVolume: ${volume_btc} BTC ($${volume})\n24h change: ${change_24h}%\n7d change: ${change_7d}%\nCirculating supply: ${this.network.client.symbol}${circulating}\nTotal supply: ${this.network.client.symbol}${total_supply}`
+            let keyboard = Extra.markup((m) => m.inlineKeyboard([
                 m.callbackButton("Update", "update_price")
-              ])))
+              ]))
+              try{
+                ctx.editMessageText(message, keyboard);
+            }catch(e){
+                ctx.editMessageText(message + ".", keyboard);
+            }
         }
     }
     
@@ -108,5 +123,11 @@ export class callback_handler{
               ])
         }
         ctx.editMessageText(message, Extra.HTML().markup(keyboard));
+    }
+
+    private get_coingecko_ticker(): string | undefined {
+        let ticker = this.configuration.get("ticker");
+        if (ticker === undefined || typeof ticker !== "string") return undefined;
+        return ticker;
     }
 }
