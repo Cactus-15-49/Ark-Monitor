@@ -14,7 +14,7 @@ export class send_feedback {
 
 
     public send_send_feedback = (ctx: UContext)=> {
-        let text = ctx.text;
+        const text = ctx.text;
         ctx.reply("Feedback sent.");
         for (const admin of this.get_admins()){
             ctx.telegram.sendMessage(admin,"New feedback\n" + text)
@@ -23,7 +23,7 @@ export class send_feedback {
     }
 
     private get_admins() {
-        let config_admin_ids = this.configuration.get("admin_id");
+        const config_admin_ids = this.configuration.get("admin_id");
         if (config_admin_ids === undefined || !Array.isArray(config_admin_ids)) return [];
         return config_admin_ids;
     }

@@ -1,5 +1,5 @@
 import { Container } from "@arkecosystem/core-kernel";
-import {users, delegates, voters, missed_blocks} from "./models";
+import {users, delegates, voters} from "./models";
 import  mongoose from "mongoose";
 
 @Container.injectable()
@@ -22,7 +22,7 @@ export class Database{
         if (go_back > 0){
             new_state_array = current_state.splice(0, new_state_array.length - go_back);
         }
-        let new_state = `${new_state_array.join("/")}/${menu}`;
+        const new_state = `${new_state_array.join("/")}/${menu}`;
         await users.findOneAndUpdate({chat_id}, {state: new_state});
     }
 
@@ -39,8 +39,8 @@ export class Database{
     }
 
     public async go_back(chat_id: number, current_state: Array<string>, times: number = 1){
-        let new_state_array = current_state.splice(0, current_state.length - times);
-        let new_state = new_state_array.join("/");
+        const new_state_array = current_state.splice(0, current_state.length - times);
+        const new_state = new_state_array.join("/");
         await users.findOneAndUpdate({chat_id}, {state:new_state});
         return new_state_array;
 
@@ -74,18 +74,6 @@ export class Database{
         await voters.findOneAndDelete({chat_id, address});
     }
 
-    public async add_missed_block(username: string, p_key: string, round: number){
-        let missed_block = await missed_blocks.findOne({username, round: round - 1 });
-        let consecutive = 1;
-        if (missed_block != null) consecutive = missed_block.consecutive + 1;
-        const new_missed_block = new missed_blocks({ username, p_key, round, consecutive });
-        new_missed_block.save(function (err, res) {
-            if (err) console.error(err);
-          });
-        
-        return consecutive;
-
-    }
 
     public async get_user(chat_id: number){
         let user = await users.findOne({chat_id});
@@ -103,47 +91,30 @@ export class Database{
 
     
     public async get_delegates(chat_id: number){
-        let delegate = await delegates.find({chat_id});
-        return delegate;
+        return await delegates.find({chat_id});
     }
 
     public async get_delegates_from_username(username: string){
-        let delegate = await delegates.find({username});
-        return delegate;
+        return await delegates.find({username});
     }
 
     public async get_all_delegates_Missing(username: string){
-        let delegate = await delegates.find({username, Missing: "ON"});
-        return delegate;
+        return await delegates.find({username, Missing: "ON"});
     }
 
     public async get_voters(chat_id: number){
-        let voter = await voters.find({chat_id});
-        return voter;
+        return await voters.find({chat_id});
     }
 
     public async get_all_voters_outForging(){
-        let voter = await voters.find({Out_of_forging: "ON"});
-        return voter;
+        return await voters.find({Out_of_forging: "ON"});
     }
 
     public async get_all_voters_Rednodes(){
-        let voter = await voters.find({Rednodes: "ON"});
-        return voter;
+        return await voters.find({Rednodes: "ON"});
     }
 
     public async get_voter_by_address_and_transaction(address: string){
-        let voter = await voters.find({address, Transactions: "ON"});
-        return voter;
-    }
-
-    public async get_missed_blocks(round: number){
-        let missed_block = await missed_blocks.find({round});
-        return missed_block;
-    }
-
-    public async get_missed_blocks_by_delegate(username: string, round: number){
-        let missed_block = await missed_blocks.findOne({username, round});
-        return missed_block;
+        return await voters.find({address, Transactions: "ON"});
     }
 }

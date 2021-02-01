@@ -2,7 +2,7 @@ import { Container, Contracts, Enums, Utils, Providers } from "@arkecosystem/cor
 import { Managers } from "@arkecosystem/crypto";
 import { Repositories } from "@arkecosystem/core-database";
 import { Telegram, Extra } from "telegraf";
-import { BigIntToString } from "../Utils/utils";
+import { BigIntToBString } from "../Utils/utils";
 
 @Container.injectable()
 export class alerts_handler{
@@ -52,8 +52,8 @@ export class alerts_handler{
     public async start(){
         this.missing_delegates = new Map<string, number>();
         await this.init();
-        let token: string | undefined = this.configuration.get("telegram_token");
-        if (!token){ this.logger.error("Token not set. qutting"); return; }
+        const token: string | undefined = this.configuration.get("telegram_token");
+        if (!token){ this.logger.error("Token not set. The bot will not send out notifications."); return; }
         this.bot = new Telegram(token);
 
 
@@ -61,7 +61,7 @@ export class alerts_handler{
 
         this.delegates.buildDelegateRanking();
         this.LAST_BLOCK_DELEGATES = this.delegates.getActiveDelegates().map(delegate => {
-            let pkey = delegate.publicKey;
+            const pkey = delegate.publicKey;
             let del = delegate.getAttribute("delegate");
             del.publicKey = pkey;
             return del;
@@ -69,25 +69,25 @@ export class alerts_handler{
         this.events.listen(Enums.BlockEvent.Applied, {
             handle: async (data) => {
                 this.delegates.buildDelegateRanking();
-                let new_block_delegates = this.delegates.getActiveDelegates().map(delegate => {
-                    let pkey = delegate.publicKey;
+                const new_block_delegates = this.delegates.getActiveDelegates().map(delegate => {
+                    const pkey = delegate.publicKey;
                     let del = delegate.getAttribute("delegate");
                     del.publicKey = pkey;
                     return del;
                 });
-                let old_delegates = this.LAST_BLOCK_DELEGATES.map(obj => ({...obj}));
+                const old_delegates = this.LAST_BLOCK_DELEGATES.map(obj => ({...obj}));
                 this.LAST_BLOCK_DELEGATES = new_block_delegates.map(obj => ({...obj}));
                 this.process_new_block(new_block_delegates, old_delegates , data.data);
 
-                let producer = data.data.generatorPublicKey;
-                let delegate: Contracts.State.Wallet = this.wallets.findByPublicKey(producer);
-                let username = delegate.getAttribute("delegate.username");
+                const producer:string = data.data.generatorPublicKey;
+                const delegate: Contracts.State.Wallet = this.wallets.findByPublicKey(producer);
+                const username = delegate.getAttribute("delegate.username");
                 if (this.missing_delegates.has(producer)){
                     const consecutive = this.missing_delegates.get(producer);
                     this.missing_delegates.delete(producer);
-                    let delegate_chat = await this.db.get_all_delegates_Missing(username);
+                    const delegate_chat = await this.db.get_all_delegates_Missing(username);
 
-                    let voter_list = await this.db.get_all_voters_Rednodes();
+                    const voter_list = await this.db.get_all_voters_Rednodes();
                     for (let chat of delegate_chat){
                         this.bot.sendMessage(chat.chat_id, `${username} is Green again. \nMissed blocks: ${consecutive}`);
                     }
@@ -108,11 +108,11 @@ export class alerts_handler{
 
                 const transaction =  data.data;
                 const sender_p_key = transaction.senderPublicKey;
-                let wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(sender_p_key);
+                const wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(sender_p_key);
                 let addresses: string[] = [wallet.address];
                 if (transaction.typeGroup === 1 && transaction.type === 6){
                     transaction.asset.payments.forEach(element => {
-                        let address = element.recipientId;
+                        const address = element.recipientId;
                         if (!addresses.includes(address)) addresses.push(address);
                     });
                 }else{
@@ -131,10 +131,10 @@ export class alerts_handler{
 
         this.events.listen(Enums.RoundEvent.Missed, {
             handle: async (data) => {
-                let delegate: Contracts.State.Wallet = data.data.delegate;
-                let username = delegate.getAttribute("delegate.username");
-                let pkey = delegate.publicKey;
-                if (pkey != undefined){
+                const delegate: Contracts.State.Wallet = data.data.delegate;
+                const username = delegate.getAttribute("delegate.username");
+                const pkey = delegate.publicKey;
+                if (pkey !== undefined){
                     let consecutive = 1;
                     if (this.missing_delegates.has(delegate.publicKey!)) {
                         consecutive = this.missing_delegates.get(delegate.publicKey!)! + 1;
@@ -142,16 +142,16 @@ export class alerts_handler{
                     }
                     else this.missing_delegates.set(delegate.publicKey!, 1);
 
-                    let delegate_chat = await this.db.get_all_delegates_Missing(username);
+                    const delegate_chat = await this.db.get_all_delegates_Missing(username);
 
-                    let voter_list = await this.db.get_all_voters_Rednodes();
+                    const voter_list = await this.db.get_all_voters_Rednodes();
                         
                     if (consecutive === 1){
                         for (let chat of delegate_chat){
                             this.bot.sendMessage(chat.chat_id, `${username} is Orange`);
                         }
                         for (let voter of voter_list){
-                            let wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
+                            const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
                             if (wallet.hasVoted() && wallet.getAttribute("vote") == pkey){
                                 this.bot.sendMessage(voter.chat_id, `${username} (voted by ${voter.address}) is Orange`);
                             }
@@ -183,16 +183,14 @@ export class alerts_handler{
         });
     }
 
-    private async process_new_block(new_delegates: Array<any>, old_delegates: Array<any>, block: any){
-        
+
+    private async process_new_block(new_delegates: Array<any>, old_delegates: Array<any>, block: any){    
 
         const delegates_difference: Array<any> = new_delegates.map(element => {
-            let last_block_delegate: any = old_delegates.find(o => {return o.username === element.username});
-            if (last_block_delegate != undefined){
+            const last_block_delegate: any = old_delegates.find(o => {return o.username === element.username});
+            if (last_block_delegate !== undefined){
                 element.votediff = element.voteBalance.minus(last_block_delegate.voteBalance);
-                element.rankdiff = element.rank - last_block_delegate.rank;
-            
-                
+                element.rankdiff = element.rank - last_block_delegate.rank;                
             }
             else{
                 element.votediff = Utils.BigNumber.ZERO;
@@ -200,16 +198,16 @@ export class alerts_handler{
             }
             return element;
         }).filter((element) => {return (!(element.votediff.isZero()) || element.rankdiff != 0)});
-        this.logger.info("------------------------------------");
+        this.logger.debug("------------------------------------");
         if (delegates_difference.length > 0){
-            let transactions = await this.get_block_transactions(block.height);
-            let filtered_transactions = transactions.map((trans) =>{
+            const transactions = await this.get_block_transactions(block.height);
+            const filtered_transactions = transactions.map((trans) =>{
                 if (trans.typeGroup == 1 && trans.type == 3){
                     return trans;
                 }
 
                 let valid:Boolean = false;
-                let sender = this.wallets.findByPublicKey(trans.senderPublicKey);
+                const sender = this.wallets.findByPublicKey(trans.senderPublicKey);
                 if (sender.hasVoted()){
                     valid = true;
                     const delegate: Contracts.State.Wallet = this.wallets.findByPublicKey(sender.getAttribute("vote"));
@@ -218,7 +216,7 @@ export class alerts_handler{
                 if (trans.typeGroup == 1 && trans.type == 6){
                     let recipients = trans.asset.payments;
                     trans.asset.payments = recipients.map((o) => {
-                        let single_recipient = this.wallets.findByAddress(o.recipientId);
+                        const single_recipient = this.wallets.findByAddress(o.recipientId);
                         if (single_recipient.hasVoted()){
                             valid = true;
                             const delegate: Contracts.State.Wallet = this.wallets.findByPublicKey(single_recipient.getAttribute("vote"));
@@ -231,7 +229,7 @@ export class alerts_handler{
                     let recipient = this.wallets.findByAddress(trans.recipientId);
                 
                 
-                    if (recipient.hasVoted()){
+                    if (recipient.hasVoted() && recipient.address !== sender.address){
                         valid = true;
                         const delegate: Contracts.State.Wallet = this.wallets.findByPublicKey(recipient.getAttribute("vote"));
                         trans.recipientvote = delegate.getAttribute("delegate.username");
@@ -242,7 +240,7 @@ export class alerts_handler{
                     return trans;
                 }
             })
-            let result = delegates_difference.map((wallet) => {
+            const result = delegates_difference.map((wallet) => {
                 wallet.transactions = filtered_transactions.filter(o => {
                     if (o === undefined){
                         return false;
@@ -259,10 +257,10 @@ export class alerts_handler{
                     let type;
                     let sender;
                     let recipient: string | undefined = undefined;
-                    let amount;
+                    let amount = Utils.BigNumber.ZERO;
                     let id = transaction.id;
                     if (transaction.typeGroup == 1 && transaction.type == 3){
-                        let sender_wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(transaction.senderPublicKey);
+                        const sender_wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(transaction.senderPublicKey);
                         sender = sender_wallet.address;
                         amount = sender_wallet.balance;
                         if (transaction.asset.votes.includes("+" + wallet.publicKey)){
@@ -273,19 +271,22 @@ export class alerts_handler{
                     }else if (transaction.typeGroup == 1 && transaction.type == 6){
                         let multi_transactions: any[] = [];
                         sender = transaction.recipientId;
-                        if (wallet.username == transaction.sendervote){
+                        if (wallet.username === transaction.sendervote){
                             type = 3
+                            for (let recipient of transaction.asset.payments){
+                                if (recipient.vote !== transaction.sendervote) amount.plus(recipient.amount);
+                            }
+                            recipient = `Multipay (${transaction.asset.payments.length})`
                         }else {
                             type = 4
+                            for (let recipient of transaction.asset.payments){
+                                if (recipient.vote === wallet.username) multi_transactions.push({id, type, sender, recipient: recipient.recipientId, amount: recipient.amount});
+                            }
+                            return multi_transactions;
                         }
-                        for (let recipient of transaction.asset.payments){
-                            if (recipient.vote === wallet.username) multi_transactions.push({id, type, sender, recipient: recipient.recipientId, amount: recipient.amount});
-                        }
-                    
-                        return multi_transactions;
                     }else if (transaction.typeGroup == 1 && transaction.type == 0){
                         sender = transaction.recipientId;
-                        let d_wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(transaction.senderPublicKey);
+                        const d_wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(transaction.senderPublicKey);
                         recipient = d_wallet.address;
                         amount = transaction.amount;
                         if (wallet.username === transaction.sendervote) type = 3;
@@ -302,25 +303,25 @@ export class alerts_handler{
 
             
             for (let delegate of result){
-                let chat_id_list = await this.db.get_delegates_from_username(delegate.username);
+                const chat_id_list = await this.db.get_delegates_from_username(delegate.username);
                 let message = `Delegate: ${delegate.username}\n`;
-                let delta_rank = delegate.rankdiff;
-                let new_rank = delegate.rank;
-                let old_rank = new_rank - delta_rank;
-                let delta_votes = delegate.votediff;
+                const delta_rank = delegate.rankdiff;
+                const new_rank = delegate.rank;
+                const old_rank = new_rank - delta_rank;
+                const delta_votes = delegate.votediff;
                 this.logger.debug(delegate.username);
                 this.logger.debug(delta_rank);
                 this.logger.debug(new_rank);
                 this.logger.debug(old_rank);
                 this.logger.debug(delta_votes);
-                let change_voters = delegate.transactions.some(o => o.type == 1 || o.type == 2);
+                const change_voters = delegate.transactions.some(o => o.type == 1 || o.type == 2);
 
                 if (delta_rank < 0) message += `Rank: ${old_rank} --(+${Math.abs(delta_rank)})--> ${new_rank}\n`
                 else if (delta_rank > 0) message += `Rank: ${old_rank} --(-${Math.abs(delta_rank)})--> ${new_rank}\n`
-                else message += `Rank remain the same (${old_rank})\n `
+                else message += `Rank remain the same (${old_rank})\n`
 
-                if (delta_votes.isNegative())  message += `You lost ${this.network.client.token} ${BigIntToString(delta_votes.times(-1), 2)} votes\n`
-                else if (delta_votes.isGreaterThan(0)) message += `You got ${this.network.client.token} ${BigIntToString(delta_votes, 2)} votes\n`
+                if (delta_votes.isNegative())  message += `You lost ${this.network.client.token} ${BigIntToBString(delta_votes.times(-1), 0)} votes\n`
+                else if (delta_votes.isGreaterThan(0)) message += `You got ${this.network.client.token} ${BigIntToBString(delta_votes, 0)} votes\n`
                 else message += "Votes remain the same.\n"
 
                 if (old_rank <= milestone.activeDelegates && milestone.activeDelegates < new_rank) {
@@ -351,23 +352,22 @@ export class alerts_handler{
                 message += "REASONS:\n"
 
                 if (delegate.transactions.length){
-                    let sortedTransaction = delegate.transactions.sort((trans1, trans2) => {
+                    const sortedTransaction = delegate.transactions.sort((trans1, trans2) => {
                         if (trans1.amount.isGreaterThan(trans2.amount)) return 1;
                             if (trans1.amount.isLessThan(trans2.amount)) return -1;
                         return 0;
                     });
                     for (let trans of sortedTransaction.slice(0, 5)){
-                        let amount = `${this.network.client.token} ${BigIntToString(trans.amount, 2)}`
-                        let sender_string = `<a href="${this.network.client.explorer}/wallets/${trans.sender}">${trans.sender}</a>`
+                        const amount = `${this.network.client.token} ${BigIntToBString(trans.amount, 2)}`
+                        const sender_string = `<a href="${this.network.client.explorer}/wallets/${trans.sender}">${trans.sender}</a>`
+                        const recipient_string = `<a href="${this.network.client.explorer}/wallets/${trans.recipient}">${trans.recipient}</a>`
                         if (trans.type == 1){
                             message += `- ${sender_string} voted you with a weight of ${amount}\n`
                         }else if (trans.type == 2){
                             message += `- ${sender_string} unvoted you with a weight of ${amount}\n`
                         }else if (trans.type == 3){
-                            let recipient_string = `<a href="${this.network.client.explorer}/wallets/${trans.recipient}">${trans.recipient}</a>`
                             message += `- ${sender_string} sent ${amount} to ${recipient_string}\n`
                         }else if (trans.type == 4){
-                            let recipient_string = `<a href="${this.network.client.explorer}/wallets/${trans.recipient}">${trans.recipient}</a>`
                             message += `- ${sender_string} received ${amount} from ${recipient_string}\n`
                         }
                         message += `<a href="${this.network.client.explorer}/transaction/${trans.id}">View on explorer</a>\n`
@@ -377,23 +377,27 @@ export class alerts_handler{
                 if (delta_rank !== 0){
                     let new_message = "";
                     for (let other_delegate of result){
-                        let dele_username = other_delegate.username;
+                        const dele_username = other_delegate.username;
                         if (dele_username === delegate.username || other_delegate.transactions.length === 0) continue;
-                        let dele_new_rank = other_delegate.rank;
-                        let dele_old_rank = dele_new_rank - other_delegate.rankdiff;
-                        let sortedTransaction = other_delegate.transactions.sort((trans1, trans2) => {
+                        const dele_new_rank = other_delegate.rank;
+                        const dele_old_rank = dele_new_rank - other_delegate.rankdiff;
+
+                        new_message += dele_username;
+
+                        if (dele_old_rank > old_rank && dele_new_rank < new_rank) new_message += " got over you:\nReasons:\n"
+                        else if (dele_old_rank < old_rank && dele_new_rank > new_rank) new_message += " dropped below you:\nReasons:\n";
+                        else continue;
+                        const other_sortedTransaction = other_delegate.transactions.sort((trans1, trans2) => {
                             if (trans1.amount.isGreaterThan(trans2.amount)) return 1;
                             if (trans1.amount.isLessThan(trans2.amount)) return -1;
                             return 0;
                         });
                         let n_iterations = 0;
-                        new_message += dele_username;
-                        if (dele_old_rank > old_rank && dele_new_rank < new_rank) new_message += " got over you:\nReasons:\n"
-                        else new_message += " dropped below you:\nReasons:\n";
 
-                        for (let trans of sortedTransaction){
-                            let amount = `${this.network.client.token} ${BigIntToString(trans.amount, 2)}`
-                            let sender_string = `<a href="${this.network.client.explorer}/wallets/${trans.sender}">${trans.sender}</a>`
+
+                        for (let trans of other_sortedTransaction){
+                            const amount = `${this.network.client.token} ${BigIntToBString(trans.amount, 2)}`
+                            const sender_string = `<a href="${this.network.client.explorer}/wallets/${trans.sender}">${trans.sender}</a>`
                             if (dele_old_rank < old_rank && dele_new_rank > new_rank){
                                 if (trans.type == 2){
                                     new_message += `- ${sender_string} unvoted ${dele_username} with a weight of ${amount}\n`
@@ -424,26 +428,30 @@ export class alerts_handler{
                         }
 
                         this.logger.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+
+                        if (new_message != "" && (message + new_message).length >= 4000){
+                            for (let chat of chat_id_list){
+                                if (((chat.Votes !== "OFF" && (delta_votes.isLessThan(new Utils.BigNumber(Number(chat.Votes)).times(-100000000)) || delta_votes.isGreaterThan(new Utils.BigNumber(Number(chat.Votes)).times(100000000)))) || (chat.Position === "ON" &&  Math.abs(delta_rank) > 0) || (change_voters && chat.Voters == "ON")))
+                                    this.bot.sendMessage(chat.chat_id, message, Extra.HTML());
+            
+                            }
+                            message = new_message
+                        }else {
+                            message += new_message
+                        }   
                     }
 
-                    if (new_message != "" && (message + new_message).length >= 4000){
-                        for (let chat of chat_id_list){
-                            if (((chat.Votes !== "OFF" && (delta_votes.isLessThan(new Utils.BigNumber(Number(chat.Votes)).times(-100000000)) || delta_votes.isGreaterThan(new Utils.BigNumber(Number(chat.Votes)).times(100000000)))) || (chat.Position === "ON" &&  Math.abs(delta_rank) > 0) || (change_voters && chat.Voters == "ON")))
-                                this.bot.sendMessage(chat.chat_id, message, Extra.HTML());
-        
-                        }
-                        message = new_message
-                    }else {
-                        message += new_message
-                    }                                         
+                                                          
 
                 }
-
-                for (let chat of chat_id_list){
-                    if (((chat.Votes !== "OFF" && (delta_votes.isLessThan(new Utils.BigNumber(Number(chat.Votes)).times(-100000000)) || delta_votes.isGreaterThan(new Utils.BigNumber(Number(chat.Votes)).times(100000000)))) || (chat.Position === "ON" &&  Math.abs(delta_rank) > 0) || (change_voters && chat.Voters == "ON")))
-                        this.bot.sendMessage(chat.chat_id, message, Extra.HTML());
-
+                if (message != ""){
+                    for (let chat of chat_id_list){
+                        if (((chat.Votes !== "OFF" && (delta_votes.isLessThan(new Utils.BigNumber(Number(chat.Votes)).times(-100000000)) || delta_votes.isGreaterThan(new Utils.BigNumber(Number(chat.Votes)).times(100000000)))) || (chat.Position === "ON" &&  Math.abs(delta_rank) > 0) || (change_voters && chat.Voters == "ON")))
+                            this.bot.sendMessage(chat.chat_id, message, Extra.HTML());
+    
+                    }
                 }
+                
                 
 
 
@@ -453,7 +461,7 @@ export class alerts_handler{
     }
 
     private get_block_transactions = async (id:number) => {
-        let temp = this.transactions_queue.filter((o) => o.blockHeight == id);
+        const temp = this.transactions_queue.filter((o) => o.blockHeight == id);
         this.transactions_queue = this.transactions_queue.filter((o) => o.blockHeight > id);
         return temp;
     }
@@ -478,7 +486,7 @@ export class alerts_handler{
 
             delegates.forEach(delegate => {
                 if (!(current_round === round - 1 || this.missing_delegates.has(delegate.publicKey))) return;
-                let missed = !blocks.some(block => {
+                const missed = !blocks.some(block => {
                     return delegate.publicKey === block.generatorPublicKey;
                 })
                 if (missed) {

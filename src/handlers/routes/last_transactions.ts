@@ -16,16 +16,16 @@ export class last_transactions {
     public display_transactions = async (ctx: UContext) =>  {
         let choice: any;
         if (ctx.user.states[0] === "Dmenu"){
-            choice = ctx.user.delegates.find((delegates) => delegates.username == ctx.text || delegates.address == ctx.text);
+            choice = ctx.user.delegates.find((delegates) => delegates.username === ctx.text || delegates.address === ctx.text);
         }else{
-            choice = ctx.user.voters.find((wallet) => wallet.name == ctx.text || wallet.address == ctx.text);
+            choice = ctx.user.voters.find((wallet) => wallet.name === ctx.text || wallet.address === ctx.text);
         }
-        if (choice != undefined){
+        if (choice !== undefined){
             if (ctx.user.states[0] === "Dmenu"){
                 ctx.reply(`Transactions of ${choice.username}`)
             }
             else{
-                if (choice.name == undefined){
+                if (choice.name === undefined){
                     ctx.reply(`Transactions of ${choice.address}`)
                 }else{
                     ctx.reply(`Transactions of ${choice.name} (${choice.address})`)
@@ -34,7 +34,7 @@ export class last_transactions {
             }
             const transactions: Interfaces.ITransactionData[] = await this.transactionHistoryService.findManyByCriteria({ address: choice.address });
             let message = ""
-            let start = Math.max(transactions.length - 5, 0);
+            const start = Math.max(transactions.length - 5, 0);
             for (const transaction of transactions.slice(start, start + 5).reverse()){
                 message += await this.dislpay_transactions.display(transaction, choice.address, ctx.chat_id);
                 message += "\n------------------------------------------------------------------\n";
@@ -45,7 +45,7 @@ export class last_transactions {
             ctx.replyWithHTML(message, keyboard); 
         }
         else{
-            ctx.reply("Use Keyboard")
+            ctx.reply("Invalid input. Please use your keyboard or go /Back if you are stuck.")
         }
     }
 }

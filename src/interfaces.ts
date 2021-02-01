@@ -41,10 +41,8 @@ export interface DUser {
 }
 
 export interface missed_block {
-    username: string,
-    p_key: string,
-    round: number
-    consecutive: number
+    missed: number,
+    pkey: string
 }
 
 export interface UContext extends Context{

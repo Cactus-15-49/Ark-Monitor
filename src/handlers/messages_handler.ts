@@ -35,8 +35,6 @@ export class message_handler {
     private menu_tree;
 
     public setup(){
-        this.logger.info("DIOCANE")
-        this.logger.info(this.init);
         this.menu_tree = {
             'start':{
                 'buttons': {
@@ -52,12 +50,12 @@ export class message_handler {
                 'voter': {
                     'buttons': {
                         'text': this.init.voter_check,
-                        '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1 , "", this.init.init)}
+                        '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1 , "", this.init.init)}
                     },
                     'name': {
                         'any': {
                             'buttons': {
-                                '/Continue': this.init.skip_add_name,
+                                '/continue': this.init.skip_add_name,
                                 'text': this.init.add_name
                             }
                         }
@@ -65,47 +63,48 @@ export class message_handler {
                 },
                 'delegate': {
                     'buttons': {
-                        '/Continue': this.init.skip_delegate,
+                        '/continue': this.init.skip_delegate,
                         'text': this.init.delegate_check,
-                        '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1 , "", this.init.init)}
+                        '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1 , "", this.init.init)}
                     }
                 },
                 'both': {
                     'buttons': {
                         'text': this.init.voter_check,
-                        '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1 , "", this.init.init)}
+                        '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1 , "", this.init.init)}
                     }
                 }
             },
             'Dmenu': {
                 'buttons': {
-                    'Delegates info': this.menu.delegates_info,
-                    'Last transactions': this.menu.last_transactions,
-                    'Price': this.menu.price,
-                    'Rednodes': this.menu.rednodes,
-                    'Notifications': this.menu.delegate_notifications,
-                    'Links': this.menu.links,
-                    'Send feedback': this.menu.send_feedback,
-                    'Go to Voters': this.menu.change_menu,
-                    'Settings': this.menu.settings,
-                    'Bot Info': this.menu.info
+                    'delegates info': this.menu.delegates_info,
+                    'last transactions': this.menu.last_transactions,
+                    'price': this.menu.price,
+                    'rednodes': this.menu.rednodes,
+                    'notifications': this.menu.delegate_notifications,
+                    'links': this.menu.links,
+                    'send feedback': this.menu.send_feedback,
+                    'go to voters': this.menu.change_menu,
+                    'settings': this.menu.settings,
+                    'bot info': this.menu.info,
+                    '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", undefined)}
                 },
                 'last_transaction': {
                     'buttons': {
                         'text': this.last_transactions.display_transactions,
-                        '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", undefined)}
+                        '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", undefined)}
                     }
                 },
                 'notifications': {
                     'buttons': {
                         'text': this.notifications.choose_delegate,
-                        '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", undefined)}
+                        '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", undefined)}
                     },
                     'delegate': {
                         'any': {
                             'buttons': {
                                 'text': this.notifications.change_notification_delegate,
-                                '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 3, "", this.menu.delegate_notifications)}
+                                '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 3, "", this.menu.delegate_notifications)}
                             },
                             'cap': {
                                 'buttons': {
@@ -119,30 +118,30 @@ export class message_handler {
                 'feedback': {
                     'buttons': {
                         'text' : this.send_feedback.send_send_feedback,
-                        '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", undefined)}
+                        '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", undefined)}
                     }
                 },
                 'settings': {
                     'buttons': {
-                        '+Add': this.settings.delegate_add,
+                        '+add': this.settings.delegate_add,
                         'text': this.settings.delegate_main,
-                        "+Add voter": this.settings.voter_add_from_delegate,
-                        '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1 , "", undefined)}
+                        "+add voter": this.settings.voter_add_from_delegate,
+                        '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1 , "", undefined)}
                     },
                     'add': {
                         'buttons': {
                             'text': this.settings.check_username,
-                            '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", this.menu.settings)}
+                            '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", this.menu.settings)}
                         }
                     },
                     'add_voter': {
                         'buttons': {
                             'text': this.settings.check_address,
-                            '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", this.menu.settings)}
+                            '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", this.menu.settings)}
                         },
                         'any': {
                             'buttons' : {
-                                '/Continue': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 2, "", this.menu.settings)},
+                                '/continue': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 2, "", this.menu.settings)},
                                 'text': this.settings.add_name_settings
                             }
                         }
@@ -150,13 +149,13 @@ export class message_handler {
                     'any': {
                         'buttons': {
                             'delete': this.settings.delete_delegate,
-                            '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", this.menu.settings)}
+                            '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", this.menu.settings)}
                         },
                         'delete':{
                             'buttons': {
                                 'yes' : this.settings.confirm_delete_username,
                                 'no' : (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, ctx.user.states[2] , this.settings.delegate_main)},
-                                '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, ctx.user.states[2] , this.settings.delegate_main)}
+                                '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, ctx.user.states[2] , this.settings.delegate_main)}
                             }
                         }
                     }
@@ -165,33 +164,34 @@ export class message_handler {
             },
             'Vmenu': {
                 'buttons': {
-                    'Balance': this.menu.balance,
-                    'Last transactions': this.menu.last_transactions,
-                    'Price': this.menu.price,
-                    'Rednodes': this.menu.rednodes,
-                    'Notifications': this.menu.voter_notifications,
-                    'Links': this.menu.links,
-                    'Send feedback': this.menu.send_feedback,
-                    'Go to Delegates': this.menu.change_menu,
-                    'Settings': this.menu.settings,
-                    'Bot Info': this.menu.info
+                    'balance': this.menu.balance,
+                    'last transactions': this.menu.last_transactions,
+                    'price': this.menu.price,
+                    'rednodes': this.menu.rednodes,
+                    'notifications': this.menu.voter_notifications,
+                    'links': this.menu.links,
+                    'send feedback': this.menu.send_feedback,
+                    'go to delegates': this.menu.change_menu,
+                    'settings': this.menu.settings,
+                    'bot info': this.menu.info,
+                    '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", undefined)}
                 },
                 'last_transaction': {
                     'buttons': {
                         'text': this.last_transactions.display_transactions,
-                        '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", undefined)}
+                        '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", undefined)}
                     }
                 },
                 'notifications': {
                     'buttons': {
                         'text': this.notifications.choose_voter,
-                        '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", undefined)}
+                        '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", undefined)}
                     },
                     'wallet': {
                         'any': {
                             'buttons': {
                                 'text': this.notifications.change_notification_voter,
-                                '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 3, "", this.menu.voter_notifications)}
+                                '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 3, "", this.menu.voter_notifications)}
                             }
                         }
                     }
@@ -199,24 +199,24 @@ export class message_handler {
                 'feedback': {
                     'buttons': {
                         'text' : this.send_feedback.send_send_feedback,
-                        '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", undefined)}
+                        '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", undefined)}
                     }
                 },
                 'settings': {
                     'buttons': {
-                        '+Add': this.settings.voter_add,
-                        '+Add delegate': this.settings.delegate_add_from_voter,
+                        '+add': this.settings.voter_add,
+                        '+add delegate': this.settings.delegate_add_from_voter,
                         'text': this.settings.voter_main,
-                        '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", undefined)}
+                        '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", undefined)}
                     },
                     'add': {
                         'buttons': {
                             'text': this.settings.check_address,
-                            '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", this.menu.settings)}
+                            '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", this.menu.settings)}
                         },
                         'any': {
                             'buttons' : {
-                                '/Continue': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 2, "", this.menu.settings)},
+                                '/continue': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 2, "", this.menu.settings)},
                                 'text': this.settings.add_name_settings
                             }
                         }
@@ -224,7 +224,7 @@ export class message_handler {
                     'add_delegate': {
                         'buttons': {
                             'text': this.settings.check_username,
-                            '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", this.menu.settings)}
+                            '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", this.menu.settings)}
                         }
                     },
                     'any': {
@@ -232,19 +232,19 @@ export class message_handler {
                             'delete': this.settings.delete_address,
                             'add name': this.settings.change_name,
                             'change name': this.settings.change_name,
-                            '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", this.menu.settings)}
+                            '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", this.menu.settings)}
                         },
                         'delete':{
                             'buttons': {
                                 'yes' : this.settings.confirm_delete_address,
                                 'no' : (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, ctx.user.states[2] , this.settings.voter_main)},
-                                '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, ctx.user.states[2] , this.settings.voter_main)}
+                                '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, ctx.user.states[2] , this.settings.voter_main)}
                             }
                         },
                         'change': {
                             'buttons': {
                                 'text': this.settings.confirm_change_name,
-                                '/Back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, ctx.user.states[2] , this.settings.voter_main)}
+                                '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, ctx.user.states[2] , this.settings.voter_main)}
                             }
                         }
                     }
@@ -256,28 +256,28 @@ export class message_handler {
 
 
     public handle = (ctx: UContext) => {
-        let states = ctx.user.states;
-        let action = this.menu_tree;
-        for (let single of states){
-
-            if (single in action){
-                action = action[single];
-            }else if ('any' in action){
-                action = action['any'];
+        const states = ctx.user.states;
+        let i_state = this.menu_tree;
+        for (const state of states){
+            if (state in i_state){
+                i_state = i_state[state];
+            }else if ('any' in i_state){
+                i_state = i_state['any'];
             }
             else{
                 throw new Error(`invalid state! (current state: ${states})`);
             }
         }
-        let message = ctx.text;
-        let buttons = action["buttons"];
+
+        const message = ctx.text.toLowerCase();
+        const buttons = i_state["buttons"];
         this.logger.debug(`${ctx.chat_id} [${states}]: ${message}`);
-        if (message in buttons && message != 'text'){
+        if (message in buttons && message !== 'text'){
             buttons[message](ctx);
         } else if ('text' in buttons){
             buttons['text'](ctx);
         }else {
-            ctx.reply("Use your keyboard :)");
+            ctx.reply("Invalid input. Please use your keyboard or use the /Back command if you feel like you are stuck here :)");
         }
     }
  

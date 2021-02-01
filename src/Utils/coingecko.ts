@@ -1,4 +1,4 @@
-import { fetch } from "node-fetch";
+import * as fetch from "node-fetch";
 
 
 export let coingecko_request = async (ticker: string | undefined) => {
@@ -8,6 +8,7 @@ export let coingecko_request = async (ticker: string | undefined) => {
         const json = await request.json();
         return json;
     }catch (e){
+        console.log(e);
         return undefined;
     }
  }

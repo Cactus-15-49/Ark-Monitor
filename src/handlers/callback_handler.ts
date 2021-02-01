@@ -24,29 +24,29 @@ export class callback_handler{
     private network = Managers.configManager.get("network");
 
     public handle = (ctx: UContext) => {
-        let data: string | undefined = ctx.callbackQuery!.data;
+        const data: string | undefined = ctx.callbackQuery!.data;
         if (data === undefined) return;
-        let data_array = data.split("_");
+        const data_array = data.split("_");
         if (data_array.length == 2 && data_array[0] == 'update'){
             if (data == 'update_balance') this.menu.balance(ctx);
             else if (data == 'update_price') this.update_price(ctx);
             else if (data == 'update_delegateinfo') this.menu.delegates_info(ctx);
         }else if (data_array.length == 3){
-            let next = data_array[0] === "next";
-            if (next == false && data_array[0]!= "previous") return;
-            let current_page = Number(data_array[1]);
+            const next = data_array[0] === "next";
+            if (next === false && data_array[0] !== "previous") return;
+            const current_page = Number(data_array[1]);
             if (isNaN(current_page)) return;
-            let address = data_array[2];
+            const address = data_array[2];
             this.last_transactions(ctx, next, current_page, address);
         }
 
     }
 
     private update_price = async (ctx: UContext) => {
-        const cmc = await coingecko_request(this.get_coingecko_ticker());
-        if (cmc === undefined){
-            let message = `There are problems with CoinGecko. Try again later`
-            let keyboard = Extra.markup((m) => m.inlineKeyboard([m.callbackButton("Update", "update_price")]))
+        const coingecko = await coingecko_request(this.get_coingecko_ticker());
+        if (coingecko === undefined){
+            const message = `There are problems with CoinGecko. Try again later.`
+            const keyboard = Extra.markup((m) => m.inlineKeyboard([m.callbackButton("Update", "update_price")]))
             try{
                 ctx.editMessageText(message, keyboard);
             }catch(e){
@@ -55,24 +55,25 @@ export class callback_handler{
             return;
         }
         else{
-            const data = cmc.market_data;
+            const data = coingecko.market_data;
         
-            let price = data.current_price.usd
-            let price_btc = data.current_price.btc
-            let volume = data.total_volume.usd
-            let volume_btc = data.total_volume.btc
-            let market_cap = data.market_cap.usd
-            let market_cap_btc = data.market_cap.btc
-            let change_24h = data.price_change_percentage_24h
-            let change_7d = data.price_change_percentage_7d
-            let circulating = data.circulating_supply
-            let total_supply = data.total_supply
+            const price = data.current_price.usd
+            const price_btc = data.current_price.btc
+            const rank = data.market_cap_rank
+            const volume = data.total_volume.usd
+            const volume_btc = data.total_volume.btc
+            const market_cap = data.market_cap.usd
+            const market_cap_btc = data.market_cap.btc
+            const change_24h = data.price_change_percentage_24h
+            const change_7d = data.price_change_percentage_7d
+            const circulating = data.circulating_supply
+            const total_supply = data.total_supply
             
-            let message = `${this.network.client.symbol} STATS:\nPrice: ${price_btc} BTC ($${price})\nMarket cap: ${market_cap_btc} BTC ($${market_cap})\nVolume: ${volume_btc} BTC ($${volume})\n24h change: ${change_24h}%\n7d change: ${change_7d}%\nCirculating supply: ${this.network.client.symbol}${circulating}\nTotal supply: ${this.network.client.symbol}${total_supply}`
-            let keyboard = Extra.markup((m) => m.inlineKeyboard([
+            const message = `${this.network.client.symbol} STATS:\nPrice: ${price_btc} BTC ($${price})\nMarket cap rank: ${rank}\n\nMarket cap: ${market_cap_btc} BTC ($${market_cap})\nVolume: ${volume_btc} BTC ($${volume})\n\n24h change: ${change_24h}%\n7d change: ${change_7d}%\n\nCirculating supply: ${this.network.client.symbol}${circulating}\nTotal supply: ${this.network.client.symbol}${total_supply}`
+            const keyboard = Extra.markup((m) => m.inlineKeyboard([
                 m.callbackButton("Update", "update_price")
               ]))
-              try{
+            try{
                 ctx.editMessageText(message, keyboard);
             }catch(e){
                 ctx.editMessageText(message + ".", keyboard);
@@ -85,7 +86,7 @@ export class callback_handler{
         let keyboard;
         const transactions: Interfaces.ITransactionData[] = await this.transactionHistoryService.findManyByCriteria({ address: address });
         if (next){
-            let start = transactions.length - (5 *(current_page + 1));
+            const start = transactions.length - (5 *(current_page + 1));
             for (const transaction of transactions.slice(Math.max(start, 0), start + 5 - Math.min(start, 0)).reverse()){
                 message += await this.display_transactions.display(transaction, address, ctx.chat_id);
                 message += "\n------------------------------------------------------------------\n";
@@ -103,7 +104,7 @@ export class callback_handler{
                 m.callbackButton('next', `next_${current_page + 1}_${address}`)
               ])
         }else{
-            let start = Math.min(transactions.length - (5 * (current_page - 1)), transactions.length - 5);
+            const start = Math.min(transactions.length - (5 * (current_page - 1)), transactions.length - 5);
             for (const transaction of transactions.slice(Math.max(start, 0), start + 5 - Math.min(start, 0)).reverse()){
                 message += await this.display_transactions.display(transaction, address, ctx.chat_id);
                 message += "\n------------------------------------------------------------------\n";
@@ -126,7 +127,7 @@ export class callback_handler{
     }
 
     private get_coingecko_ticker(): string | undefined {
-        let ticker = this.configuration.get("ticker");
+        const ticker = this.configuration.get("ticker");
         if (ticker === undefined || typeof ticker !== "string") return undefined;
         return ticker;
     }

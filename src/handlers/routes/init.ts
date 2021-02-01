@@ -30,7 +30,7 @@ export class init {
     
     public voter = (ctx: UContext) => {
         this.db.enter_menu(ctx.chat_id, ctx.user.states, "voter");
-        ctx.reply("Please write down your public wallet address.",  {reply_markup: Markup.keyboard(["/Back"])});
+        ctx.reply("Please send your public wallet address.",  {reply_markup: Markup.keyboard(["/Back"])});
     }
     
     public delegate = (ctx: UContext) => {
@@ -40,7 +40,7 @@ export class init {
     
     public both = (ctx: UContext) => {
         this.db.enter_menu(ctx.chat_id, ctx.user.states, "both");
-        ctx.reply("Please write down your public wallet address.",  {reply_markup: Markup.keyboard(["/Back"])})
+        ctx.reply("Please send your public wallet address.",  {reply_markup: Markup.keyboard(["/Back"])})
     }
     
     public voter_check = (ctx: UContext) => {
@@ -50,8 +50,8 @@ export class init {
         if (AddressOrUsername.length <= 20){
             try {
                 wallet = this.wallets.findByUsername(AddressOrUsername.toLowerCase());
-            }catch (error){
-                ctx.reply("Invalid wallet address. Try again or press /Back to go back.", {reply_markup: Markup.keyboard(["/Back"])});
+            }catch (e){
+                ctx.reply("INVALID USERNAME\nThis username does not exist. Try again or press /Back to go back.", {reply_markup: Markup.keyboard(["/Back"])});
                 return;
             }
         }
@@ -60,26 +60,26 @@ export class init {
         }
         if (wallet.publicKey){
             this.db.create_voter(chat_id, wallet.address);
-            ctx.reply("Wallet address saved.");
-            ctx.reply("Do you want to give a name to this wallet?\nWrite it down or hit the /Continue button to skip",  {reply_markup: Markup.keyboard(["/Continue"])});
+            ctx.reply("Wallet address saved succesfully.");
+            ctx.reply("Do you want to assign a name to this wallet so that you can recognize it better?\nWrite it now or hit the /Continue button to skip.",  {reply_markup: Markup.keyboard(["/Continue"])});
             this.db.enter_menu(chat_id, ctx.user.states, `name/${wallet.address}`)
         }else{
-            ctx.reply("Invalid wallet address. Try again or press /Back to go back.",  {reply_markup: Markup.keyboard(["/Back"])});
+            ctx.reply("INVALID WALLET ADDRESS\nThis wallet address doesn't exist. Try again or press /Back to go back.",  {reply_markup: Markup.keyboard(["/Back"])});
         }
     }
     
     public add_name = (ctx: UContext) => {
-        let name = ctx.text;
+        const name = ctx.text;
         const chat_id = ctx.chat_id;
-        let pattern = /^[a-zA-Z0-9_ -]*$/;
-        if (name.length < 2 || !pattern.test(name) || name.length > 25){
-            ctx.reply("The name should be shorter than 25 characters and can only contain alphanumeric characters, spaces and - or _. Try with another name.",  {reply_markup: Markup.keyboard(["/Continue"])});
+        const allowed_pattern = /^[a-zA-Z0-9_ -]*$/;
+        if (name.length < 1 || !allowed_pattern.test(name) || name.length > 25){
+            ctx.reply("INVALID NAME!\nThe name must be shorter than 25 characters and can only contain alphanumeric characters (a-z A-Z 0-9), spaces and - or _. Try with another name.",  {reply_markup: Markup.keyboard(["/Continue"])});
         }else if(ctx.user.voters.some((voter) => name ===  voter.name)){
-            ctx.reply("This name already exist. Try with another name.",  {reply_markup: Markup.keyboard([["/Continue"]])})
+            ctx.reply("NAME ALREADY EXIST\nYou have already used this name for another address. Try with a different name.",  {reply_markup: Markup.keyboard([["/Continue"]])})
             
         }else{
             this.db.change_voter_name(ctx.chat_id, ctx.user.states[3], name);
-            if (ctx.user.states[1] == "voter"){
+            if (ctx.user.states[1] === "voter"){
                 this.db.change_root(chat_id, "Vmenu");
                 this.menu_utils.display_menu(ctx);
             }
@@ -92,7 +92,7 @@ export class init {
 
     public skip_add_name = (ctx: UContext) => {
         const chat_id = ctx.chat_id;
-        if (ctx.user.states[1] == "voter"){
+        if (ctx.user.states[1] === "voter"){
             this.db.change_root(chat_id, "Vmenu");
             this.menu_utils.display_menu(ctx);
         }
@@ -109,22 +109,22 @@ export class init {
         try{
             wallet = this.wallets.findByUsername(username.toLowerCase());
         }catch (error) {
-            ctx.reply(`This username is not registered as ${this.get_delegate_name()}. Try again or you can go /Back .`,  {reply_markup: Markup.keyboard(["/Back"])});
+            ctx.reply(`USERNAME DOESN'T EXIST\nThis username is not registered as a ${this.get_delegate_name()}. Try again or use the /Back button to go back.`,  {reply_markup: Markup.keyboard(["/Back"])});
             return;
         }
-        if (wallet.hasAttribute("delegate.resigned") && wallet.getAttribute("delegate.resigned")) ctx.reply(`You can't add resigned ${this.get_delegate_name()}s. Try again or you can go /Back .`,  {reply_markup: Markup.keyboard(["/Back"])});
+        if (wallet.hasAttribute("delegate.resigned") && wallet.getAttribute("delegate.resigned")) ctx.reply(`You can't add resigned ${this.get_delegate_name()}s. Try again with a valid username or use the /Back button to go back.`,  {reply_markup: Markup.keyboard(["/Back"])});
         else {
             await this.db.create_delegate(ctx.chat_id, wallet.getAttribute("delegate.username"), wallet.address);
             this.db.change_root(ctx.chat_id, "Dmenu")
-            ctx.reply(`${this.get_delegate_name()} saved.`)
+            ctx.reply(`${this.get_delegate_name()} saved succesfully.`)
             this.menu_utils.display_menu(ctx);
         }
         
     }
 
     public skip_delegate = (ctx: UContext) => {
-        if (ctx.user.voters.length){
-            ctx.reply("Nice try. You have to insert a username.");
+        if (ctx.user.voters.length < 1){
+            ctx.reply("Nice try :) You have to insert a username.");
         }
         else{
             this.db.change_root(ctx.chat_id, "Vmenu")
@@ -133,12 +133,12 @@ export class init {
     }
 
     private get_delegate_name(): string {
-        let config_delegate_name = this.configuration.get("delegate_name");
+        const config_delegate_name = this.configuration.get("delegate_name");
         if (config_delegate_name === undefined || typeof config_delegate_name !== "string") return "delegate";
         return config_delegate_name;
     }
 
     private get_token() {
-        Managers.configManager.get("network").client.token;
+        return Managers.configManager.get("network").client.token;
     } 
 }

@@ -28,8 +28,8 @@ export class Telegram_bot{
         
 
     public async start(){
-        let token: string | undefined = this.configuration.get("telegram_token");
-        if (!token){ this.logger.error("Token not set. qutting"); return; }
+        const token: string | undefined = this.configuration.get("telegram_token");
+        if (!token){ this.logger.error("Telegram Token not set. The bot will not answer to incoming messages."); return; }
         this.bot = new Telegraf(token);
         this.message_handler.setup();
         this.bot.use(async (ctx, next) => {

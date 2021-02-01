@@ -1,7 +1,7 @@
 import { Container, Contracts, Utils } from "@arkecosystem/core-kernel";
 import { Managers, Interfaces } from "@arkecosystem/crypto";
 import { Voter } from "../interfaces";
-import { BigIntToString } from "../Utils/utils";
+import { BigIntToBString } from "../Utils/utils";
 
 @Container.injectable()
 export class display_transactions {
@@ -38,9 +38,9 @@ export class display_transactions {
 
 
     private Transfer = async (tx, chat_id) => {
-        let balance = tx.amount;
-        let fee = tx.fee;
-        let addresses: Voter[] = await this.db.get_voters(chat_id);
+        const balance = tx.amount;
+        const fee = tx.fee;
+        const addresses: Voter[] = await this.db.get_voters(chat_id);
         let sender: string;
         let wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(tx.senderPublicKey);
         if (wallet.hasAttribute("delegate.username"))
@@ -59,12 +59,12 @@ export class display_transactions {
         if (addresses.some(add => add.address === wallet.address))
             recipient += " (you)";
         
-        let transaction = `${sender} -> ${recipient}\nAmount: ${BigIntToString(balance, 2)} (${BigIntToString(fee, 2)})`;
+        let transaction = `${sender} -> ${recipient}\nAmount: ${BigIntToBString(balance, 2)} (${BigIntToBString(fee, 2)})`;
 
-        if (tx.timestamp != undefined)
+        if (tx.timestamp !== undefined)
             transaction += `\nTimestamp: ${tx.timestamp}`
 
-        if (tx.vendorField != undefined)
+        if (tx.vendorField !== undefined)
             transaction += `\nSmartbridge: ${tx.vendorField}`;
 
         transaction += `\n<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
@@ -73,7 +73,7 @@ export class display_transactions {
 
     private SecondSignature = (tx) => {
         let transaction = `Second signature Transaction`
-        if (tx.timestamp != undefined)
+        if (tx.timestamp !== undefined)
             transaction += `\nTimestamp: ${tx.timestamp}`
         transaction += `\n<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
         return transaction;
@@ -81,23 +81,23 @@ export class display_transactions {
 
     private DelegateRegistration = (tx) => {
         let transaction = `New delegate registered as ${tx.asset.delegate.username}`
-        if (tx.timestamp != undefined)
+        if (tx.timestamp !== undefined)
             transaction += `\nTimestamp: ${tx.timestamp}`
         transaction += `\n<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
         return transaction;
     }
 
     private Vote = (tx) => {
-        let votes = tx.asset.votes;
+        const votes = tx.asset.votes;
         let transaction = "";
         for (const vote of votes){
-            let delegate: Contracts.State.Wallet = this.wallets.findByPublicKey(vote.substring(1));
+            const delegate: Contracts.State.Wallet = this.wallets.findByPublicKey(vote.substring(1));
             if (vote[0] === "+")
                 transaction += `You voted for ${delegate.getAttribute("delegate.username")}`
             else 
                 transaction += `You unvoted for ${delegate.getAttribute("delegate.username")}`
         }
-        if (tx.timestamp != undefined)
+        if (tx.timestamp !== undefined)
             transaction += `\nTimestamp: ${tx.timestamp}`
         transaction += `\n<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
         return transaction;
@@ -105,7 +105,7 @@ export class display_transactions {
 
     private MultiPayment = (tx, address) => {
         let sender: string;
-        let wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(tx.senderPublicKey);
+        const wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(tx.senderPublicKey);
         if (wallet.hasAttribute("delegate.username"))
             sender = wallet.getAttribute("delegate.username");
         else
@@ -117,7 +117,6 @@ export class display_transactions {
             for (let payment of tx.asset.payments){
                 balance = balance.plus(payment.amount);
             }
-            balance = balance;
 
             recipient = `Multipayment (${tx.asset.payments.length})`
         }
@@ -126,7 +125,7 @@ export class display_transactions {
                 if (payment.recipientId === address)
                     balance = balance.plus(payment.amount); 
             }
-            let wallet: Contracts.State.Wallet = this.wallets.findByAddress(address);
+            const wallet: Contracts.State.Wallet = this.wallets.findByAddress(address);
             if (wallet.hasAttribute("delegate.username"))
                 recipient = wallet.getAttribute("delegate.username");
             else
@@ -136,12 +135,12 @@ export class display_transactions {
 
         const fee = tx.fee;
 
-        let transaction = `${sender} -> ${recipient}\nAmount: ${BigIntToString(balance, 2)} (${BigIntToString(fee, 2)})`;
+        let transaction = `${sender} -> ${recipient}\nAmount: ${BigIntToBString(balance, 2)} (${BigIntToBString(fee, 2)})`;
 
-        if (tx.timestamp != undefined)
+        if (tx.timestamp !== undefined)
             transaction += `\nTimestamp: ${tx.timestamp}`
 
-        if (tx.vendorField != undefined)
+        if (tx.vendorField !== undefined)
             transaction += `\nSmartbridge: ${tx.vendorField}`;
 
         transaction += `\n<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
@@ -149,8 +148,8 @@ export class display_transactions {
     }
 
     private DelegateResignation = (tx) => {
-        let wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(tx.senderPublicKey);
-        let transaction = `Delegate  " ${wallet.getAttribute("delegate.username")} resigned.\nTimestamp: ${tx.timestamp}`;
+        const wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(tx.senderPublicKey);
+        let transaction = `Delegate " ${wallet.getAttribute("delegate.username")} resigned.\nTimestamp: ${tx.timestamp}`;
         transaction += `\n<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
         return transaction;
     }
@@ -160,8 +159,8 @@ export class display_transactions {
     
     private Stake = (tx, address) => {
         const recipient = tx.recipientId;
-        let amount = tx.asset.stakeCreate.amount;
-        let duration = tx.asset.stakeCreate.duration;
+        const amount = tx.asset.stakeCreate.amount;
+        const duration = tx.asset.stakeCreate.duration;
         let string_duration: string;
         if (duration.isEqualTo(31557600))
             string_duration = "1 year"
@@ -175,9 +174,9 @@ export class display_transactions {
             string_duration = "??"
         let transaction: string;
         if (recipient == address){
-            transaction = `You staked ß ${BigIntToString(amount, 2)} for ${string_duration}\nTimestamp: ${tx.timestamp}`;
+            transaction = `You staked ß ${BigIntToBString(amount, 2)} for ${string_duration}\nTimestamp: ${tx.timestamp}`;
         }else{
-            transaction = `You sent to ${recipient} ß ${BigIntToString(amount, 2)} staked for ${string_duration}\nTimestamp: ${tx.timestamp}`;
+            transaction = `You sent to ${recipient} ß ${BigIntToBString(amount, 2)} staked for ${string_duration}\nTimestamp: ${tx.timestamp}`;
         }
         transaction += `\n<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
         return transaction;
@@ -186,7 +185,7 @@ export class display_transactions {
     private RedeemStake = async (tx) => {
         const staked_trans: Interfaces.ITransactionData | undefined = await this.transactionHistoryService.findOneByCriteria({ id: tx.asset.stakeRedeem });
         const amount = staked_trans!.asset!.stakeCreate.amount;
-        let transaction = `You redeemed a stake of ß ${BigIntToString(amount, 2)}\nTimestamp: ${tx.timestamp}`
+        let transaction = `You redeemed a stake of ß ${BigIntToBString(amount, 2)}\nTimestamp: ${tx.timestamp}`
         transaction += `\n<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
         return transaction;
     }
@@ -194,7 +193,7 @@ export class display_transactions {
     private CancelStake = async (tx) => {
         const staked_trans: Interfaces.ITransactionData | undefined = await this.transactionHistoryService.findOneByCriteria({ id: tx.asset.stakeRedeem });
         const amount = staked_trans!.asset!.stakeCreate.amount;
-        let transaction = `You canceled a stake of ß ${BigIntToString(amount, 2)}\nTimestamp: ${tx.timestamp}`
+        let transaction = `You canceled a stake of ß ${BigIntToBString(amount, 2)}\nTimestamp: ${tx.timestamp}`
         transaction += `\n<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
         return transaction;
     }

@@ -18,14 +18,15 @@ export class menu_utils {
     private readonly configuration!: Providers.PluginConfiguration;
 
     public async handle_back(ctx: UContext, number_back: number, text: string, callback){
-        let current_state: string[] = ctx.user.states;
-        let state_array_length = current_state.length;
-        if (state_array_length <= number_back + 1 ){
-            if (current_state[0] == "init"){
+        const current_states: string[] = ctx.user.states;
+        const states_array_length = current_states.length;
+        if (states_array_length <= number_back + 1 ){
+            if (current_states[0] == "init"){
                 ctx.user.states = ["start"];
                 this.db.change_root(ctx.chat_id, "start");
             }else {
-                ctx.user.states = await this.db.go_back(ctx.chat_id, ctx.user.states, number_back);
+                if (number_back >= 1)
+                    ctx.user.states = await this.db.go_back(ctx.chat_id, ctx.user.states, number_back);
                 this.display_menu(ctx);
                 return;
             }
@@ -33,13 +34,13 @@ export class menu_utils {
             ctx.user.states = await this.db.go_back(ctx.chat_id, ctx.user.states, number_back + 1);
         }
         ctx.text = text;
-        callback(ctx); //THIS BITCH CONFLICTS WITH THE GO BACK ABOVE BYE
+        callback(ctx);
     }
 
     public async display_menu(ctx: UContext){
         this.logger.debug(`${ctx.chat_id} sent to menu`)
-        let delegates = await this.db.get_delegates(ctx.chat_id);
-        let voters = await this.db.get_voters(ctx.chat_id);
+        const delegates = await this.db.get_delegates(ctx.chat_id);
+        const voters = await this.db.get_voters(ctx.chat_id);
         if (delegates.length == 0){
             ctx.reply('MENU',
                         {reply_markup: Markup.keyboard([["Balance", "Last transactions"], ["Rednodes", "Price"],
@@ -50,7 +51,7 @@ export class menu_utils {
                             ["Notifications", "Links"], ["Send feedback", "Settings"], ["Bot Info"]])})
         }
         else {
-            let user = await this.db.get_user(ctx.chat_id); 
+            const user = await this.db.get_user(ctx.chat_id); 
             if (user.state.split("/")[0] == "Dmenu"){
                 ctx.reply(`${this.get_delegate_name().toUpperCase()} MENU`,
                                  {reply_markup: Markup.keyboard([["Delegates info", "Last transactions"], ["Price", "Rednodes"],
@@ -66,7 +67,7 @@ export class menu_utils {
     }
 
     private get_delegate_name(): string {
-        let delegate_name_config = this.configuration.get("delegate_name");
+        const delegate_name_config = this.configuration.get("delegate_name");
         if (delegate_name_config === undefined || typeof delegate_name_config !== "string") return "delegate";
         return delegate_name_config;
     }
