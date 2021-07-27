@@ -58,11 +58,11 @@ export class init {
         else{
             wallet = this.wallets.findByAddress(AddressOrUsername);
         }
-        if (wallet.publicKey){
-            this.db.create_voter(chat_id, wallet.address);
+        if (wallet.getPublicKey()){
+            this.db.create_voter(chat_id, wallet.getAddress());
             ctx.reply("Wallet address saved succesfully.");
             ctx.reply("Do you want to assign a name to this wallet so that you can recognize it better?\nWrite it now or hit the /Continue button to skip.",  {reply_markup: Markup.keyboard(["/Continue"])});
-            this.db.enter_menu(chat_id, ctx.user.states, `name/${wallet.address}`)
+            this.db.enter_menu(chat_id, ctx.user.states, `name/${wallet.getAddress()}`)
         }else{
             ctx.reply("INVALID WALLET ADDRESS\nThis wallet address doesn't exist. Try again or press /Back to go back.",  {reply_markup: Markup.keyboard(["/Back"])});
         }
@@ -114,7 +114,7 @@ export class init {
         }
         if (wallet.hasAttribute("delegate.resigned") && wallet.getAttribute("delegate.resigned")) ctx.reply(`You can't add resigned ${this.get_delegate_name()}s. Try again with a valid username or use the /Back button to go back.`,  {reply_markup: Markup.keyboard(["/Back"])});
         else {
-            await this.db.create_delegate(ctx.chat_id, wallet.getAttribute("delegate.username"), wallet.address);
+            await this.db.create_delegate(ctx.chat_id, wallet.getAttribute("delegate.username"), wallet.getAddress());
             this.db.change_root(ctx.chat_id, "Dmenu")
             ctx.reply(`${this.get_delegate_name()} saved succesfully.`)
             this.menu_utils.display_menu(ctx);

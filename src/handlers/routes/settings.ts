@@ -70,7 +70,7 @@ export class settings {
         else if (ctx.user.delegates.some((delegate) => wallet.getAttribute("delegate.username") ===  delegate.username)) ctx.reply(`You have already inserted this address as a ${this.get_delegate_name()}. Please insert another ${this.get_delegate_name()} username.`, {reply_markup: Markup.keyboard([["/Back"]])});
         else {
             const username = wallet.getAttribute("delegate.username");
-            const address = wallet.address;
+            const address = wallet.getAddress();
             this.db.create_delegate(ctx.chat_id, username, address);
             ctx.reply(`Inserted ${username} as a ${this.get_delegate_name()}.`,  {reply_markup: Markup.keyboard([["/Back"]])})
         }
@@ -154,9 +154,9 @@ export class settings {
         else{
             wallet = this.wallets.findByAddress(AddressOrUsername);
         }
-        if (wallet.publicKey){
-            if (ctx.user.voters.some((voter) => wallet.address ===  voter.address)) {ctx.reply("You have already inserted this address as a voter. Please insert another address.", {reply_markup: Markup.keyboard([["/Back"]])}); return;}
-            const address = wallet.address;
+        if (wallet.getPublicKey()){
+            if (ctx.user.voters.some((voter) => wallet.getAddress() ===  voter.address)) {ctx.reply("You have already inserted this address as a voter. Please insert another address.", {reply_markup: Markup.keyboard([["/Back"]])}); return;}
+            const address = wallet.getAddress();
             ctx.reply(`Inserted the address ${address} as a voter address.`)
             this.db.create_voter(ctx.chat_id, address);
             ctx.reply("Do you want to add a name for this address? Write it down or press /Continue",  {reply_markup: Markup.keyboard([["/Continue"]])})

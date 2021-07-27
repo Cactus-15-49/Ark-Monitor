@@ -61,7 +61,7 @@ export class alerts_handler{
 
         this.delegates.buildDelegateRanking();
         this.LAST_BLOCK_DELEGATES = this.delegates.getActiveDelegates().map(delegate => {
-            const pkey = delegate.publicKey;
+            const pkey = delegate.getPublicKey();
             let del = delegate.getAttribute("delegate");
             del.publicKey = pkey;
             return del;
@@ -70,7 +70,7 @@ export class alerts_handler{
             handle: async (data) => {
                 this.delegates.buildDelegateRanking();
                 const new_block_delegates = this.delegates.getActiveDelegates().map(delegate => {
-                    const pkey = delegate.publicKey;
+                    const pkey = delegate.getPublicKey();
                     let del = delegate.getAttribute("delegate");
                     del.publicKey = pkey;
                     return del;
@@ -109,7 +109,7 @@ export class alerts_handler{
                 const transaction =  data.data;
                 const sender_p_key = transaction.senderPublicKey;
                 const wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(sender_p_key);
-                let addresses: string[] = [wallet.address];
+                let addresses: string[] = [wallet.getAddress()];
                 if (transaction.typeGroup === 1 && transaction.type === 6){
                     transaction.asset.payments.forEach(element => {
                         const address = element.recipientId;
@@ -133,14 +133,14 @@ export class alerts_handler{
             handle: async (data) => {
                 const delegate: Contracts.State.Wallet = data.data.delegate;
                 const username = delegate.getAttribute("delegate.username");
-                const pkey = delegate.publicKey;
+                const pkey = delegate.getPublicKey();
                 if (pkey !== undefined){
                     let consecutive = 1;
-                    if (this.missing_delegates.has(delegate.publicKey!)) {
-                        consecutive = this.missing_delegates.get(delegate.publicKey!)! + 1;
-                        this.missing_delegates.set(delegate.publicKey!, consecutive);
+                    if (this.missing_delegates.has(delegate.getPublicKey()!)) {
+                        consecutive = this.missing_delegates.get(delegate.getPublicKey()!)! + 1;
+                        this.missing_delegates.set(delegate.getPublicKey()!, consecutive);
                     }
-                    else this.missing_delegates.set(delegate.publicKey!, 1);
+                    else this.missing_delegates.set(delegate.getPublicKey()!, 1);
 
                     const delegate_chat = await this.db.get_all_delegates_Missing(username);
 
@@ -229,7 +229,7 @@ export class alerts_handler{
                     let recipient = this.wallets.findByAddress(trans.recipientId);
                 
                 
-                    if (recipient.hasVoted() && recipient.address !== sender.address){
+                    if (recipient.hasVoted() && recipient.getAddress() !== sender.getAddress()){
                         valid = true;
                         const delegate: Contracts.State.Wallet = this.wallets.findByPublicKey(recipient.getAttribute("vote"));
                         trans.recipientvote = delegate.getAttribute("delegate.username");
@@ -261,7 +261,7 @@ export class alerts_handler{
                     let id = transaction.id;
                     if (transaction.typeGroup == 1 && transaction.type == 3){
                         const sender_wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(transaction.senderPublicKey);
-                        sender = sender_wallet.address;
+                        sender = sender_wallet.getAddress();
                         amount = sender_wallet.balance;
                         if (transaction.asset.votes.includes("+" + wallet.publicKey)){
                             type = 1;
@@ -287,7 +287,7 @@ export class alerts_handler{
                     }else if (transaction.typeGroup == 1 && transaction.type == 0){
                         sender = transaction.recipientId;
                         const d_wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(transaction.senderPublicKey);
-                        recipient = d_wallet.address;
+                        recipient = d_wallet.getAddress();
                         amount = transaction.amount;
                         if (wallet.username === transaction.sendervote) type = 3;
                         else type = 4;

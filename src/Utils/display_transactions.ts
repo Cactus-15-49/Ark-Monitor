@@ -46,8 +46,8 @@ export class display_transactions {
         if (wallet.hasAttribute("delegate.username"))
             sender = wallet.getAttribute("delegate.username");
         else
-            sender = wallet.address;
-        if (addresses.some(add => add.address === wallet.address))
+            sender = wallet.getAddress();
+        if (addresses.some(add => add.address === wallet.getAddress()))
             sender += " (you)";
         
         let recipient: string;
@@ -55,8 +55,8 @@ export class display_transactions {
         if (wallet.hasAttribute("delegate.username"))
             recipient = wallet.getAttribute("delegate.username");
         else
-            recipient = wallet.address;
-        if (addresses.some(add => add.address === wallet.address))
+            recipient = wallet.getAddress();
+        if (addresses.some(add => add.address === wallet.getAddress()))
             recipient += " (you)";
         
         let transaction = `${sender} -> ${recipient}\nAmount: ${BigIntToBString(balance, 2)} (${BigIntToBString(fee, 2)})`;
@@ -109,10 +109,10 @@ export class display_transactions {
         if (wallet.hasAttribute("delegate.username"))
             sender = wallet.getAttribute("delegate.username");
         else
-            sender = wallet.address;
+            sender = wallet.getAddress();
         let balance = Utils.BigNumber.ZERO;
         let recipient = "";
-        if (wallet.address === address){
+        if (wallet.getAddress() === address){
             sender += " (you)"
             for (let payment of tx.asset.payments){
                 balance = balance.plus(payment.amount);
@@ -129,7 +129,7 @@ export class display_transactions {
             if (wallet.hasAttribute("delegate.username"))
                 recipient = wallet.getAttribute("delegate.username");
             else
-                recipient = wallet.address;
+                recipient = wallet.getAddress();
             recipient += " (you)"
         }
 

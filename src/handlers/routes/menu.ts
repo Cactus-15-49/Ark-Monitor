@@ -50,7 +50,7 @@ export class menu {
         for (const db_wallet of ctx.user.voters){
             i++;
             const wallet: Contracts.State.Wallet = this.wallets.findByAddress(db_wallet.address);
-            const balance = wallet.balance;
+            const balance = wallet.getBalance();
             total_balance = total_balance.plus(balance);
 
             answer += "Wallet ";
@@ -360,7 +360,7 @@ export class menu {
             const current_height = this.blockchain.getLastHeight();
             const milestone = Managers.configManager.getMilestone(current_height);
             const wallet: Contracts.State.Wallet = this.wallets.findByUsername(delegate.username);
-            const pkey = wallet.publicKey;
+            const pkey = wallet.getPublicKey();
             const delegateAttribute = wallet.getAttribute("delegate");
             const username = delegateAttribute.username;
             const produced = delegateAttribute.producedBlocks;
