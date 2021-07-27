@@ -262,7 +262,7 @@ export class alerts_handler{
                     if (transaction.typeGroup == 1 && transaction.type == 3){
                         const sender_wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(transaction.senderPublicKey);
                         sender = sender_wallet.getAddress();
-                        amount = sender_wallet.balance;
+                        amount = sender_wallet.getBalance();
                         if (transaction.asset.votes.includes("+" + wallet.publicKey)){
                             type = 1;
                         }else{
