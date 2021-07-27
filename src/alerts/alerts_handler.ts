@@ -79,7 +79,7 @@ export class alerts_handler{
                 this.LAST_BLOCK_DELEGATES = new_block_delegates.map(obj => ({...obj}));
                 this.process_new_block(new_block_delegates, old_delegates , data.data);
 
-                const producer:string = data.data.generatorPublicKey;
+                const producer: string = data.data.generatorPublicKey;
                 const delegate: Contracts.State.Wallet = this.wallets.findByPublicKey(producer);
                 const username = delegate.getAttribute("delegate.username");
                 if (this.missing_delegates.has(producer)){
@@ -201,7 +201,7 @@ export class alerts_handler{
         this.logger.debug("------------------------------------");
         if (delegates_difference.length > 0){
             const transactions = await this.get_block_transactions(block.height);
-            const filtered_transactions = transactions.map((trans) =>{
+            const filtered_transactions = transactions.map((trans) => {
                 if (trans.typeGroup == 1 && trans.type == 3){
                     return trans;
                 }
@@ -333,6 +333,23 @@ export class alerts_handler{
                         if (wallet.hasVoted() && wallet.getAttribute("vote") == delegate.publicKey){
                             this.bot.sendMessage(voter.chat_id, `Delegate ${delegate.username} (voted by ${voter.address}) is out from the forging delegates!\nNew Rank: ${new_rank}.`);
                         }
+                    }
+
+                    if (this.missing_delegates.has(delegate.publicKey)){
+                        const consecutive = this.missing_delegates.get(delegate.publicKey);
+                        this.missing_delegates.delete(delegate.publicKey);
+                        const delegate_chat = await this.db.get_all_delegates_Missing(delegate.username);
+    
+                        const voter_list = await this.db.get_all_voters_Rednodes();
+                        for (let chat of delegate_chat){
+                            this.bot.sendMessage(chat.chat_id, `${delegate.username} is out because he was read. \nMissed blocks: ${consecutive}`);
+                        }
+                        for (let voter of voter_list){
+                            let wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
+                            if (wallet.hasVoted() && wallet.getAttribute("vote") == delegate.username){
+                                this.bot.sendMessage(voter.chat_id, `${delegate.username} (voted by ${voter.address}) is out because he was red. \nMissed blocks: ${consecutive}`);
+                            }
+                        }  
                     }
                 }
                 else if (old_rank > milestone.activeDelegates && milestone.activeDelegates >= new_rank) {
