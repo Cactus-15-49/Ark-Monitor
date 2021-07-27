@@ -1,4 +1,4 @@
-import { Container, Contracts, Enums, Utils, Providers } from "@arkecosystem/core-kernel";
+import { Container, Contracts, Enums, Utils, Providers, Services} from "@arkecosystem/core-kernel";
 import { Managers } from "@arkecosystem/crypto";
 import { Repositories } from "@arkecosystem/core-database";
 import { Telegram, Extra } from "telegraf";
@@ -6,6 +6,10 @@ import { BigIntToBString } from "../utils/utils";
 
 @Container.injectable()
 export class alerts_handler{
+
+    @Container.inject(Container.Identifiers.Application)
+    private readonly app!: Contracts.Kernel.Application;
+
     @Container.inject(Container.Identifiers.LogService)
     private readonly logger!: Contracts.Kernel.Logger;
 
@@ -13,6 +17,7 @@ export class alerts_handler{
     private readonly events!: Contracts.Kernel.EventDispatcher;
 
     @Container.inject(Container.Identifiers.DposState)
+    @Container.tagged("state", "blockchain")
     private readonly delegates!: Contracts.State.DposState;
 
     @Container.inject(Container.Identifiers.BlockchainService)
@@ -59,7 +64,8 @@ export class alerts_handler{
 
 
 
-        this.delegates.buildDelegateRanking();
+
+        await this.app.get<Services.Triggers.Triggers>(Container.Identifiers.TriggerService).call("buildDelegateRanking", { dposState: this.delegates });
         this.LAST_BLOCK_DELEGATES = this.delegates.getActiveDelegates().map(delegate => {
             const pkey = delegate.getPublicKey();
             let del = delegate.getAttribute("delegate");
@@ -68,7 +74,7 @@ export class alerts_handler{
         });
         this.events.listen(Enums.BlockEvent.Applied, {
             handle: async (data) => {
-                this.delegates.buildDelegateRanking();
+                await this.app.get<Services.Triggers.Triggers>(Container.Identifiers.TriggerService).call("buildDelegateRanking", { dposState: this.delegates });
                 const new_block_delegates = this.delegates.getActiveDelegates().map(delegate => {
                     const pkey = delegate.getPublicKey();
                     let del = delegate.getAttribute("delegate");

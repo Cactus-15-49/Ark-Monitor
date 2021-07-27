@@ -1,4 +1,4 @@
-import { Container, Contracts, Utils, Providers } from "@arkecosystem/core-kernel";
+import { Container, Contracts, Utils, Providers, Services } from "@arkecosystem/core-kernel";
 import { Managers, Interfaces } from "@arkecosystem/crypto";
 import { Markup } from "telegraf";
 import { BigIntToString, BigIntToBString } from "../../utils/utils";
@@ -7,6 +7,9 @@ import { UContext } from "../../interfaces";
 
 @Container.injectable()
 export class menu {
+
+    @Container.inject(Container.Identifiers.Application)
+    private readonly app!: Contracts.Kernel.Application;
 
     @Container.inject(Container.Identifiers.WalletRepository)
     @Container.tagged("state", "blockchain")
@@ -25,6 +28,7 @@ export class menu {
     private readonly blockchain!: Contracts.Blockchain.Blockchain;
 
     @Container.inject(Container.Identifiers.DposState)
+    @Container.tagged("state", "blockchain")
     private readonly dpos_state!: Contracts.State.DposState;
 
     @Container.inject(Symbol.for("menu_utils"))
@@ -366,7 +370,8 @@ export class menu {
             const produced = delegateAttribute.producedBlocks;
             const rank = delegateAttribute.rank;
 
-            this.dpos_state.buildDelegateRanking();
+            await this.app.get<Services.Triggers.Triggers>(Container.Identifiers.TriggerService).call("buildDelegateRanking", { dposState: this.dpos_state });
+
             
             const needed_delegates = this.dpos_state.getActiveDelegates().filter(delegate => {
                 if (!(delegate.hasAttribute("delegate.rank"))) return false;
