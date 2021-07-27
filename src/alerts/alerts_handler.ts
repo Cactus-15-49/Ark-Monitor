@@ -2,7 +2,7 @@ import { Container, Contracts, Enums, Utils, Providers } from "@arkecosystem/cor
 import { Managers } from "@arkecosystem/crypto";
 import { Repositories } from "@arkecosystem/core-database";
 import { Telegram, Extra } from "telegraf";
-import { BigIntToBString } from "../Utils/utils";
+import { BigIntToBString } from "../utils/utils";
 
 @Container.injectable()
 export class alerts_handler{

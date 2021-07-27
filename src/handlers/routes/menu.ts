@@ -1,8 +1,8 @@
 import { Container, Contracts, Utils, Providers } from "@arkecosystem/core-kernel";
 import { Managers, Interfaces } from "@arkecosystem/crypto";
 import { Markup } from "telegraf";
-import { BigIntToString, BigIntToBString } from "../../Utils/utils";
-import { coingecko_request } from "../../Utils/coingecko";
+import { BigIntToString, BigIntToBString } from "../../utils/utils";
+import { coingecko_request } from "../../utils/coingecko";
 import { UContext } from "../../interfaces";
 
 @Container.injectable()

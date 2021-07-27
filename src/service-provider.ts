@@ -2,7 +2,7 @@ import { Providers , Container, Contracts} from "@arkecosystem/core-kernel";
 import { Telegram_bot } from "./Telegram-bot";
 import { message_handler } from "./handlers/messages_handler";
 import { callback_handler } from "./handlers/callback_handler";
-import { display_transactions } from "./Utils/display_transactions";
+import { display_transactions } from "./utils/display_transactions";
 import { alerts_handler } from "./alerts/alerts_handler";
 import { Database } from "./database/controller";
 import { init } from "./handlers/routes/init";

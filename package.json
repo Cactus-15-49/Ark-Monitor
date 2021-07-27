@@ -28,26 +28,12 @@
         "updates": "../../node_modules/npm-check-updates/bin/npm-check-updates -a"
     },
     "dependencies": {
-        "@arkecosystem/core-kernel": "^3.0.0-next.2",
         "mongoose": "^5.11.12",
         "node-fetch": "^2.6.1",
         "telegraf": "^3.38.0"
     },
     "devDependencies": {
-        "@sindresorhus/tsconfig": "^0.7.0",
-        "@types/jest": "^26.0.0",
-        "@types/node": "^12.6.2",
-        "cross-env": "^7.0.0",
-        "del-cli": "^3.0.0",
-        "jest": "^26.0.0",
-        "jest-extended": "^0.11.2",
-        "npm-check-updates": "^7.0.0",
-        "regenerator-runtime": "^0.13.0",
-        "ts-jest": "^26.0.0",
-        "tslint": "^5.12.0",
-        "tslint-config-prettier": "^1.17.0",
-        "typedoc": "^0.18.0",
-        "typescript": "^3.2.4"
+        "@arkecosystem/core": "^3.0.0 || ^3.0.0-next.0"
     },
     "jest": {
         "preset": "../../jest-preset.json"

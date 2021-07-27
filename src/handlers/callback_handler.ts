@@ -1,7 +1,7 @@
 import { Container, Contracts, Providers } from "@arkecosystem/core-kernel";
 import { Managers, Interfaces } from "@arkecosystem/crypto";
 import { Extra } from "telegraf";
-import { coingecko_request } from "../Utils/coingecko";
+import { coingecko_request } from "../utils/coingecko";
 import { UContext } from "../interfaces";
 
 
