@@ -17,7 +17,7 @@ let delegate_schema: Schema = new Schema({
     Votes:          { type: String, default: "300"},
     Voters:         { type: String, default: "ON"} 
 });
-delegate_schema.index({ user: 1, username: 1}, { unique: true });
+delegate_schema.index({ chat_id: 1, username: 1}, { unique: true });
 
 let voters_schema: Schema = new Schema({
     chat_id:        { type: Number, required: true },
@@ -27,7 +27,7 @@ let voters_schema: Schema = new Schema({
     Out_of_forging: { type: String, default: "ON" },
     Transactions:   { type: String, default: "ON"}
 });
-voters_schema.index({ user: 1, address: 1}, { unique: true });
+voters_schema.index({ chat_id: 1, address: 1}, { unique: true });
 
 let missed_blocks_schema: Schema = new Schema({
     username:       { type: String, required: true },
