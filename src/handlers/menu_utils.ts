@@ -25,7 +25,7 @@ export class menu_utils {
                 ctx.user.states = ["start"];
                 this.db.change_root(ctx.chat_id, "start");
             }else {
-                if (number_back >= 1)
+                if (number_back >= 1 && states_array_length > 1)
                     ctx.user.states = await this.db.go_back(ctx.chat_id, ctx.user.states, number_back);
                 this.display_menu(ctx);
                 return;

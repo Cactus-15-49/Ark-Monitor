@@ -276,7 +276,8 @@ export class alerts_handler{
                         }
                     }else if (transaction.typeGroup == 1 && transaction.type == 6){
                         let multi_transactions: any[] = [];
-                        sender = transaction.recipientId;
+                        const d_wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(transaction.senderPublicKey);
+                        sender = d_wallet.getAddress();
                         if (wallet.username === transaction.sendervote){
                             type = 3
                             for (let recipient of transaction.asset.payments){
@@ -291,9 +292,9 @@ export class alerts_handler{
                             return multi_transactions;
                         }
                     }else if (transaction.typeGroup == 1 && transaction.type == 0){
-                        sender = transaction.recipientId;
+                        recipient = transaction.recipientId;
                         const d_wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(transaction.senderPublicKey);
-                        recipient = d_wallet.getAddress();
+                        sender = d_wallet.getAddress();
                         amount = transaction.amount;
                         if (wallet.username === transaction.sendervote) type = 3;
                         else type = 4;

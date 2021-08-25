@@ -416,9 +416,9 @@ export class menu {
                     const s = Math.floor(d % 3600 % 60);
                     
                     if (h > 0){
-                        return h + (h == 1 ? " hour " : " hours ");
+                        return h + (h == 1 ? " hour" : " hours");
                     }else if (m > 0){
-                        return m + (m == 1 ? " minute " : " minutes ");
+                        return m + (m == 1 ? " minute" : " minutes");
                     }
                     return s + (s == 1 ? " second" : " seconds");
                 }
