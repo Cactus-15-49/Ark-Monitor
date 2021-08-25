@@ -376,7 +376,7 @@ export class menu {
             const needed_delegates = this.dpos_state.getActiveDelegates().filter(delegate => {
                 if (!(delegate.hasAttribute("delegate.rank"))) return false;
                 const delegate_rank = delegate.getAttribute("delegate.rank");
-                return (Math.abs(delegate_rank - rank) === 1 || delegate_rank === milestone.activeDelegates);
+                return (Math.abs(delegate_rank - rank) === 1 || delegate_rank === milestone.activeDelegates || delegate_rank === milestone.activeDelegates + 1);
             })
 
 
@@ -389,13 +389,17 @@ export class menu {
                 const minor_rank = needed_delegates.find(delegate => delegate.getAttribute("delegate.rank") - rank === 1);
                 const greater_rank = needed_delegates.find(delegate => delegate.getAttribute("delegate.rank") - rank === -1);
                 const forge_rank = needed_delegates.find(delegate => delegate.getAttribute("delegate.rank") === milestone.activeDelegates);
+                const forge_rank_less_1 = needed_delegates.find(delegate => delegate.getAttribute("delegate.rank") === milestone.activeDelegates + 1);
                 if (rank <= milestone.activeDelegates){
-                    message += `|_TO ${milestone.activeDelegates + 1}th: `;
+                    message += `|_TO ${milestone.activeDelegates + 1}: `;
+                    if (forge_rank_less_1 != undefined)
+                    message += `${BigIntToBString(forge_rank_less_1.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)}\n`
                 }else{
-                    message += `|_TO ${milestone.activeDelegates}th: `;
-                }
-                if (forge_rank != undefined)
+                    message += `|_TO ${milestone.activeDelegates}: `;
+                    if (forge_rank != undefined)
                     message += `${BigIntToBString(forge_rank.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)}\n`
+                }
+                
                 if (minor_rank != undefined)
                     message += `|_TO -1: ${BigIntToBString(minor_rank.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)}\n`
                 if (greater_rank != undefined)
