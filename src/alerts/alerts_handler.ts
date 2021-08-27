@@ -374,8 +374,9 @@ export class alerts_handler{
 
                 if (chat_id_list.length <= 0) continue;
                 message += "REASONS:\n"
-
+                let hasReasons = false;
                 if (delegate.transactions.length){
+                    hasReasons = true;
                     const sortedTransaction = delegate.transactions.sort((trans1, trans2) => {
                         if (trans1.amount.isGreaterThan(trans2.amount)) return 1;
                             if (trans1.amount.isLessThan(trans2.amount)) return -1;
@@ -411,6 +412,7 @@ export class alerts_handler{
                         if (dele_old_rank > old_rank && dele_new_rank < new_rank) new_message += " got over you:\nReasons:\n"
                         else if (dele_old_rank < old_rank && dele_new_rank > new_rank) new_message += " dropped below you:\nReasons:\n";
                         else continue;
+                        hasReasons = true;
                         const other_sortedTransaction = other_delegate.transactions.sort((trans1, trans2) => {
                             if (trans1.amount.isGreaterThan(trans2.amount)) return 1;
                             if (trans1.amount.isLessThan(trans2.amount)) return -1;
@@ -467,6 +469,10 @@ export class alerts_handler{
 
                                                           
 
+                }
+
+                if (!hasReasons){
+                    message += "\n-Probably block rewards"
                 }
                 if (message != ""){
                     for (let chat of chat_id_list){
