@@ -281,7 +281,7 @@ export class alerts_handler{
                         if (wallet.username === transaction.sendervote){
                             type = 3
                             for (let recipient of transaction.asset.payments){
-                                if (recipient.vote !== transaction.sendervote) amount.plus(recipient.amount);
+                                if (recipient.vote !== transaction.sendervote) amount = amount.plus(recipient.amount);
                             }
                             recipient = `Multipay (${transaction.asset.payments.length})`
                         }else {
