@@ -41,6 +41,8 @@ export class menu {
     @Container.tagged("plugin", "@cactus1549/ark-monitor")
     private readonly configuration!: Providers.PluginConfiguration;
 
+    private network = Managers.configManager.get("network");
+
     
 
     public balance = async (ctx: UContext) =>  {
@@ -384,30 +386,30 @@ export class menu {
                 message += `(Resigned) ${username}\n`;
             }else{
                 message += `(${rank}) ${username}\n`
-                message += `VOTES: ${BigIntToBString(delegateAttribute.voteBalance, 2)}(${Utils.delegateCalculator.calculateApproval(wallet)}%)\n`
+                message += `VOTES: ${BigIntToBString(delegateAttribute.voteBalance, 2)} ${this.network.client.token} (${Utils.delegateCalculator.calculateApproval(wallet)}%)\n`
 
                 const minor_rank = needed_delegates.find(delegate => delegate.getAttribute("delegate.rank") - rank === 1);
                 const greater_rank = needed_delegates.find(delegate => delegate.getAttribute("delegate.rank") - rank === -1);
                 const forge_rank = needed_delegates.find(delegate => delegate.getAttribute("delegate.rank") === milestone.activeDelegates);
                 const forge_rank_less_1 = needed_delegates.find(delegate => delegate.getAttribute("delegate.rank") === milestone.activeDelegates + 1);
                 if (rank <= milestone.activeDelegates){
-                    message += `|_TO ${milestone.activeDelegates + 1}: `;
+                    message += `└ TO ${milestone.activeDelegates + 1}: `;
                     if (forge_rank_less_1 != undefined)
-                    message += `${BigIntToBString(forge_rank_less_1.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)}\n`
+                    message += `${BigIntToBString(forge_rank_less_1.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)} ${this.network.client.token}\n`
                 }else{
-                    message += `|_TO ${milestone.activeDelegates}: `;
+                    message += `└ TO ${milestone.activeDelegates}: `;
                     if (forge_rank != undefined)
-                    message += `${BigIntToBString(forge_rank.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)}\n`
+                    message += `${BigIntToBString(forge_rank.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)} ${this.network.client.token}\n`
                 }
                 
                 if (minor_rank != undefined)
-                    message += `|_TO -1: ${BigIntToBString(minor_rank.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)}\n`
+                    message += `└ TO -1: ${BigIntToBString(minor_rank.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)} ${this.network.client.token}\n`
                 if (greater_rank != undefined)
-                    message += `|_TO +1: ${BigIntToBString(greater_rank.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)}\n\n`
+                    message += `└ TO +1: ${BigIntToBString(greater_rank.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)} ${this.network.client.token}\n\n`
 
                 
             }
-            message += `Produced blocks: ${produced}\n`;
+            message += `Produced blocks: ${BigIntToBString(produced, 0, 0)}\n`;
 
             if (delegateAttribute.lastBlock && rank <= milestone.activeDelegates) {
                 const secondsToHms = (d: number) => {
@@ -424,16 +426,16 @@ export class menu {
                 }
                 const last_block_height = delegateAttribute.lastBlock.height;
                 message += `Last block forged ${secondsToHms((current_height - last_block_height)*milestone.blocktime)} ago\n` +
-                            `└ Height: ${last_block_height}\n└ Timestamp: ${Utils.formatTimestamp(delegateAttribute.lastBlock.timestamp).human}\n`
+                            `└ Height: ${BigIntToBString(last_block_height, 0, 0)}\n└ Timestamp: ${Utils.formatTimestamp(delegateAttribute.lastBlock.timestamp).human}\n`
                 const missed_blocks = this.alerts_handler.get_missing_delegates();
                 const missed = missed_blocks.get(pkey);
                 if (missed !== undefined){
                     message += `YOUR NODE IS RED\nYOUR ${this.get_delegate_name().toUpperCase()} HAS MISSED ${missed} BLOCKS SO FAR!\n`
                 }
-
-                message += `\nTotal forged: ${BigIntToBString(delegateAttribute.forgedFees, 2)}\n` +
-                            `└ Rewards: ${BigIntToBString(delegateAttribute.forgedRewards, 2)}\n` +
-                            `└ Fees: ${BigIntToBString(delegateAttribute.forgedFees.plus(delegateAttribute.forgedRewards), 2)}\n\n`
+                
+                message += `\nTotal forged: ${BigIntToBString(delegateAttribute.forgedFees.plus(delegateAttribute.forgedRewards), 2)} ${this.network.client.token}\n` +
+                            `└ Rewards: ${BigIntToBString(delegateAttribute.forgedRewards, 2)} ${this.network.client.token}\n` +
+                            `└ Fees: ${BigIntToBString(delegateAttribute.forgedFees, 2)} ${this.network.client.token}\n\n`
             }else{
                 message += "\n"
             }
