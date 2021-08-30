@@ -11,7 +11,8 @@ export const BigIntToString = (bigint: Utils.BigNumber, approx: number, decimals
 
 export const BigIntToBString = (bigint: Utils.BigNumber, approx: number, decimals: number = 8) => {
     let string = BigIntToString(bigint, approx, decimals);
-    const p = string.indexOf('.');
+    let p = string.indexOf('.');
+    if (p == -1) p = string.length;
     for (let i = p - 4; i >= 0; i = i - 3) string = string.slice(0, i + 1) + "," + string.slice(i + 1);
     return string;
 }

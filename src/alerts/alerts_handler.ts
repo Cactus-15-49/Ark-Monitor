@@ -327,8 +327,8 @@ export class alerts_handler{
                 else if (delta_rank > 0) message += `Rank: ${old_rank} --(-${Math.abs(delta_rank)})--> ${new_rank}\n`
                 else message += `Rank remain the same (${old_rank})\n`
 
-                if (delta_votes.isNegative())  message += `You lost ${this.network.client.token} ${BigIntToBString(delta_votes.times(-1), 0)} votes\n`
-                else if (delta_votes.isGreaterThan(0)) message += `You got ${this.network.client.token} ${BigIntToBString(delta_votes, 0)} votes\n`
+                if (delta_votes.isNegative())  message += `You lost ${BigIntToBString(delta_votes.times(-1), 0)} ${this.network.client.token} votes\n`
+                else if (delta_votes.isGreaterThan(0)) message += `You got ${BigIntToBString(delta_votes, 0)} ${this.network.client.token} votes\n`
                 else message += "Votes remain the same.\n"
 
                 if (old_rank <= milestone.activeDelegates && milestone.activeDelegates < new_rank) {
@@ -383,7 +383,7 @@ export class alerts_handler{
                         return 0;
                     });
                     for (let trans of sortedTransaction.slice(0, 5)){
-                        const amount = `${this.network.client.token} ${BigIntToBString(trans.amount, 2)}`
+                        const amount = `${BigIntToBString(trans.amount, 2)} ${this.network.client.token}`
                         const sender_string = `<a href="${this.network.client.explorer}/wallets/${trans.sender}">${trans.sender}</a>`
                         const recipient_string = `<a href="${this.network.client.explorer}/wallets/${trans.recipient}">${trans.recipient}</a>`
                         if (trans.type == 1){
@@ -393,7 +393,7 @@ export class alerts_handler{
                         }else if (trans.type == 3){
                             message += `- ${sender_string} sent ${amount} to ${recipient_string}\n`
                         }else if (trans.type == 4){
-                            message += `- ${sender_string} received ${amount} from ${recipient_string}\n`
+                            message += `- ${recipient_string} received ${amount} from ${sender_string}\n`
                         }
                         message += `<a href="${this.network.client.explorer}/transaction/${trans.id}">View on explorer</a>\n`
                     }
@@ -407,10 +407,8 @@ export class alerts_handler{
                         const dele_new_rank = other_delegate.rank;
                         const dele_old_rank = dele_new_rank - other_delegate.rankdiff;
 
-                        new_message += dele_username;
-
-                        if (dele_old_rank > old_rank && dele_new_rank < new_rank) new_message += " got over you:\nReasons:\n"
-                        else if (dele_old_rank < old_rank && dele_new_rank > new_rank) new_message += " dropped below you:\nReasons:\n";
+                        if (dele_old_rank > old_rank && dele_new_rank < new_rank) new_message += `${dele_username} got over you:\nReasons:\n`;
+                        else if (dele_old_rank < old_rank && dele_new_rank > new_rank) new_message += `${dele_username} dropped below you:\nReasons:\n`;
                         else continue;
                         hasReasons = true;
                         const other_sortedTransaction = other_delegate.transactions.sort((trans1, trans2) => {
@@ -422,7 +420,7 @@ export class alerts_handler{
 
 
                         for (let trans of other_sortedTransaction){
-                            const amount = `${this.network.client.token} ${BigIntToBString(trans.amount, 2)}`
+                            const amount = `${BigIntToBString(trans.amount, 2)} ${this.network.client.token}`
                             const sender_string = `<a href="${this.network.client.explorer}/wallets/${trans.sender}">${trans.sender}</a>`
                             if (dele_old_rank < old_rank && dele_new_rank > new_rank){
                                 if (trans.type == 2){

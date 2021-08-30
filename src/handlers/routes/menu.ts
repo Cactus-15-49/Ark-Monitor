@@ -423,8 +423,8 @@ export class menu {
                     return s + (s == 1 ? " second" : " seconds");
                 }
                 const last_block_height = delegateAttribute.lastBlock.height;
-                message += `last block forged ${secondsToHms((current_height - last_block_height)*milestone.blocktime)} ago\n` +
-                            `|_Height: ${last_block_height}\n|_Timestamp: ${Utils.formatTimestamp(delegateAttribute.lastBlock.timestamp).human}\n`
+                message += `Last block forged ${secondsToHms((current_height - last_block_height)*milestone.blocktime)} ago\n` +
+                            `└ Height: ${last_block_height}\n└ Timestamp: ${Utils.formatTimestamp(delegateAttribute.lastBlock.timestamp).human}\n`
                 const missed_blocks = this.alerts_handler.get_missing_delegates();
                 const missed = missed_blocks.get(pkey);
                 if (missed !== undefined){
@@ -432,8 +432,8 @@ export class menu {
                 }
 
                 message += `\nTotal forged: ${BigIntToBString(delegateAttribute.forgedFees, 2)}\n` +
-                            `|_Rewards: ${BigIntToBString(delegateAttribute.forgedRewards, 2)}\n` +
-                            `|_fees: ${BigIntToBString(delegateAttribute.forgedFees.plus(delegateAttribute.forgedRewards), 2)}\n\n`
+                            `└ Rewards: ${BigIntToBString(delegateAttribute.forgedRewards, 2)}\n` +
+                            `└ Fees: ${BigIntToBString(delegateAttribute.forgedFees.plus(delegateAttribute.forgedRewards), 2)}\n\n`
             }else{
                 message += "\n"
             }
