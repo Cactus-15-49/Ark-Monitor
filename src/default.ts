@@ -1,5 +1,6 @@
 export const defaults = {
     //telegram_token: "",
+    databaseName: "ark-monitor-bot",
     delegate_name: "delegate",
     base_delegates: 52,
     base_voters: 25,
