@@ -45,7 +45,8 @@ export class message_handler {
                 'buttons': {
                     'voter': this.init.voter,
                     'delegate': this.init.delegate,
-                    'both': this.init.both
+                    'both': this.init.both,
+                    '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1, "", this.init.init)}
                 },
                 'voter': {
                     'buttons': {

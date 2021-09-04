@@ -470,7 +470,7 @@ export class alerts_handler{
                 }
 
                 if (!hasReasons){
-                    message += "\n-Probably block rewards"
+                    message += "- Probably block rewards\n"
                 }
                 if (message != ""){
                     for (let chat of chat_id_list){
