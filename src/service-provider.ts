@@ -34,6 +34,7 @@ export class ServiceProvider extends Providers.ServiceProvider {
     
     
     public async boot(): Promise<void> {
+        this.app.get<Database>(Symbol.for("database")).connect();
         await this.app.get<alerts_handler>(Symbol.for("alerts_handler")).start();
         this.app.get<Telegram_bot>(Symbol.for("TeMonitor<Telegram_bot>")).start();
         this.app.get<Contracts.Kernel.Logger>(Container.Identifiers.LogService).info("Telegram BOT started!");

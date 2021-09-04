@@ -9,7 +9,7 @@ export class Database{
     @Container.tagged("plugin", "@cactus1549/ark-monitor")
     private readonly configuration!: Providers.PluginConfiguration;
     
-    constructor() {
+    public connect() {
         mongoose.connect(`mongodb://localhost/${this.configuration.get("databaseName")}`, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: true });
     }
 
