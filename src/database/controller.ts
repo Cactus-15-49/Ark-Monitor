@@ -1,12 +1,16 @@
-import { Container } from "@arkecosystem/core-kernel";
+import { Container, Providers } from "@arkecosystem/core-kernel";
 import {users, delegates, voters} from "./models";
 import  mongoose from "mongoose";
 
 @Container.injectable()
 export class Database{
+
+    @Container.inject(Container.Identifiers.PluginConfiguration)
+    @Container.tagged("plugin", "@cactus1549/ark-monitor")
+    private readonly configuration!: Providers.PluginConfiguration;
     
     constructor() {
-        mongoose.connect("mongodb://localhost/prova", { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: true });
+        mongoose.connect(`mongodb://localhost/${this.configuration.get("databaseName")}`, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: true });
     }
 
     public async create_user(chat_id: number){
