@@ -179,20 +179,18 @@ export class menu {
         }
         else{
             const data = coingecko.market_data;
-        
             const price = data.current_price.usd
             const price_btc = data.current_price.btc
             const rank = data.market_cap_rank
-            const volume = data.total_volume.usd
-            const volume_btc = data.total_volume.btc
-            const market_cap = data.market_cap.usd
-            const market_cap_btc = data.market_cap.btc
-            const change_24h = data.price_change_percentage_24h
-            const change_7d = data.price_change_percentage_7d
-            const circulating = data.circulating_supply
-            const total_supply = data.total_supply
+            const volume = BigIntToBString(data.total_volume.usd, 0, 0)
+            const volume_btc = BigIntToBString(data.total_volume.btc, 0, 0)
+            const market_cap = BigIntToBString(data.market_cap.usd, 0, 0)
+            const market_cap_btc = BigIntToBString(data.market_cap.btc, 0, 0)
+            const change_24h = parseFloat(data.price_change_percentage_24h).toFixed(2)
+            const change_7d = parseFloat(data.price_change_percentage_7d).toFixed(2)
+            const circulating = BigIntToBString(data.circulating_supply, 0, 0)
             
-            ctx.reply(`${this.get_symbol()} STATS:\nPrice: ${price_btc} BTC ($${price})\nMarket cap rank: ${rank}\n\nMarket cap: ${market_cap_btc} BTC ($${market_cap})\nVolume: ${volume_btc} BTC ($${volume})\n\n24h change: ${change_24h}%\n7d change: ${change_7d}%\n\nCirculating supply: ${this.get_symbol()}${circulating}\nTotal supply: ${this.get_symbol()}${total_supply}\n`, {reply_markup: Markup.inlineKeyboard([Markup.callbackButton("Update", "update_price")])})
+            ctx.reply(`${this.get_symbol()} STATS:\nPrice: ${price_btc} BTC ($${price})\nMarket cap rank: ${rank}\n\nMarket cap: ${market_cap_btc} BTC ($${market_cap})\nVolume: ${volume_btc} BTC ($${volume})\n\n24h change: ${change_24h}%\n7d change: ${change_7d}%\n\nCirculating supply: ${this.get_symbol()}${circulating}\n`, {reply_markup: Markup.inlineKeyboard([Markup.callbackButton("Update", "update_price")])})
         }
     }
     
