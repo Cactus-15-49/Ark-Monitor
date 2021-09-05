@@ -283,6 +283,7 @@ export class alerts_handler{
                             for (let recipient of transaction.asset.payments){
                                 if (recipient.vote !== transaction.sendervote) amount = amount.plus(recipient.amount);
                             }
+                            if (amount == Utils.BigNumber.ZERO) return [];
                             recipient = `Multipay (${transaction.asset.payments.length})`
                         }else {
                             type = 4
