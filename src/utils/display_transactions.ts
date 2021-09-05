@@ -93,13 +93,13 @@ export class display_transactions {
         for (const vote of votes){
             const delegate: Contracts.State.Wallet = this.wallets.findByPublicKey(vote.substring(1));
             if (vote[0] === "+")
-                transaction += `You voted for ${delegate.getAttribute("delegate.username")}`
+                transaction += `You voted for ${delegate.getAttribute("delegate.username")}\n`
             else 
-                transaction += `You unvoted for ${delegate.getAttribute("delegate.username")}`
+                transaction += `You unvoted for ${delegate.getAttribute("delegate.username")}\n`
         }
         if (tx.timestamp !== undefined)
-            transaction += `\nTimestamp: ${tx.timestamp}`
-        transaction += `\n<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
+            transaction += `Timestamp: ${tx.timestamp}\n`
+        transaction += `<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
         return transaction;
     }
 
