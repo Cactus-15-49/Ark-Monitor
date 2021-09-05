@@ -409,7 +409,9 @@ export class menu {
             }
             message += `Produced blocks: ${BigIntToBString(produced, 0, 0)}\n`;
 
-            if (delegateAttribute.lastBlock && rank <= milestone.activeDelegates) {
+            const last_block = delegateAttribute.lastBlock;
+            if (last_block && last_block.height > 0) {
+                const last_block_height = last_block.height
                 const secondsToHms = (d: number) => {
                     const h = Math.floor(d / 3600);
                     const m = Math.floor(d % 3600 / 60);
@@ -422,7 +424,7 @@ export class menu {
                     }
                     return s + (s == 1 ? " second" : " seconds");
                 }
-                const last_block_height = delegateAttribute.lastBlock.height;
+                
                 message += `Last block forged ${secondsToHms((current_height - last_block_height)*milestone.blocktime)} ago\n` +
                             `└ Height: ${BigIntToBString(last_block_height, 0, 0)}\n└ Timestamp: ${Utils.formatTimestamp(delegateAttribute.lastBlock.timestamp).human}\n`
                 const missed_blocks = this.alerts_handler.get_missing_delegates();
