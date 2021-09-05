@@ -190,7 +190,7 @@ export class menu {
             const change_7d = parseFloat(data.price_change_percentage_7d).toFixed(2)
             const circulating = BigIntToBString(data.circulating_supply, 0, 0)
             
-            ctx.reply(`${this.get_symbol()} STATS:\nPrice: ${price_btc} BTC ($${price})\nMarket cap rank: ${rank}\n\nMarket cap: ${market_cap_btc} BTC ($${market_cap})\nVolume: ${volume_btc} BTC ($${volume})\n\n24h change: ${change_24h}%\n7d change: ${change_7d}%\n\nCirculating supply: ${this.get_symbol()}${circulating}\n`, {reply_markup: Markup.inlineKeyboard([Markup.callbackButton("Update", "update_price")])})
+            ctx.reply(`${this.network.client.token} PRICE:\nPrice: ${price_btc} BTC ($${price})\nMarket cap rank: ${rank}\n\nMarket cap: ${market_cap_btc} BTC ($${market_cap})\nVolume: ${volume_btc} BTC ($${volume})\n\n24h change: ${change_24h}%\n7d change: ${change_7d}%\n\nCirculating supply: ${circulating} ${this.network.client.token}\n`, {reply_markup: Markup.inlineKeyboard([Markup.callbackButton("Update", "update_price")])})
         }
     }
     
