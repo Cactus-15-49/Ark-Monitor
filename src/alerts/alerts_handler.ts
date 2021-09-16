@@ -379,8 +379,8 @@ export class alerts_handler{
                 if (delegate.transactions.length){
                     hasReasons = true;
                     const sortedTransaction = delegate.transactions.sort((trans1, trans2) => {
-                        if (trans1.amount.isGreaterThan(trans2.amount)) return 1;
-                            if (trans1.amount.isLessThan(trans2.amount)) return -1;
+                        if (trans1.amount.isGreaterThan(trans2.amount)) return -1;
+                        if (trans1.amount.isLessThan(trans2.amount)) return 1;
                         return 0;
                     });
                     for (let trans of sortedTransaction.slice(0, 5)){
@@ -413,8 +413,8 @@ export class alerts_handler{
                         else continue;
                         hasReasons = true;
                         const other_sortedTransaction = other_delegate.transactions.sort((trans1, trans2) => {
-                            if (trans1.amount.isGreaterThan(trans2.amount)) return 1;
-                            if (trans1.amount.isLessThan(trans2.amount)) return -1;
+                            if (trans1.amount.isGreaterThan(trans2.amount)) return -1;
+                            if (trans1.amount.isLessThan(trans2.amount)) return 1;
                             return 0;
                         });
                         let n_iterations = 0;
