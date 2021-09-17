@@ -6,7 +6,7 @@ export const BigIntToString = (bigint: Utils.BigNumber | number, approx: number,
     if (approx > decimals) approx = decimals;
     let string = bigint.toString();
     if (string.length < decimals + 1 ) string = '0'.repeat(decimals + 1 - string.length) + string;
-    if (approx > 0) return [string.slice(0, -decimals), ".", string.slice(-decimals, -(decimals-Math.min(approx, decimals)))].join("");
+    if (approx > 0) return [string.slice(0, -decimals), ".", string.slice(-decimals, decimals == approx ? undefined : -(decimals-approx))].join("");
     else return string.slice(0, decimals > 0 ? -decimals : undefined);
 }
 
