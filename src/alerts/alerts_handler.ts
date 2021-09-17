@@ -386,7 +386,7 @@ export class alerts_handler{
                     for (let trans of sortedTransaction.slice(0, 5)){
                         const amount = `${BigIntToBString(trans.amount, 8)} ${this.network.client.token}`
                         const sender_string = `<a href="${this.network.client.explorer}/wallets/${trans.sender}">${trans.sender}</a>`
-                        const recipient_string = trans.recipient.startsWith("Multipay (") ? trans.recipient : `<a href="${this.network.client.explorer}/wallets/${trans.recipient}">${trans.recipient}</a>`
+                        const recipient_string = trans.recipient && trans.recipient.startsWith("Multipay (") ? trans.recipient : `<a href="${this.network.client.explorer}/wallets/${trans.recipient}">${trans.recipient}</a>`
                         if (trans.type == 1){
                             message += `- ${sender_string} voted you with a weight of ${amount}\n`
                         }else if (trans.type == 2){
@@ -429,7 +429,7 @@ export class alerts_handler{
                                     new_message += `<a href="${this.network.client.explorer}/transaction/${trans.id}">View on explorer</a>\n`
                                     n_iterations += 1;
                                 }else if (trans.type == 3){
-                                    let recipient_string = trans.recipient.startsWith("Multipay (") ? trans.recipient : `<a href="${this.network.client.explorer}/wallets/${trans.recipient}">${trans.recipient}</a>`
+                                    let recipient_string = trans.recipient && trans.recipient.startsWith("Multipay (") ? trans.recipient : `<a href="${this.network.client.explorer}/wallets/${trans.recipient}">${trans.recipient}</a>`
                                     new_message += `- ${sender_string} that is voting for ${dele_username} sent ${amount} to ${recipient_string}\n`
                                     new_message += `<a href="${this.network.client.explorer}/transaction/${trans.id}">View on explorer</a>\n`
                                     n_iterations += 1;
@@ -442,7 +442,7 @@ export class alerts_handler{
                                     new_message += `<a href="${this.network.client.explorer}/transaction/${trans.id}">View on explorer</a>\n`
                                     n_iterations += 1;
                                 }else if (trans.type == 4){
-                                    let recipient_string = trans.recipient.startsWith("Multipay (") ? trans.recipient : `<a href="${this.network.client.explorer}/wallets/${trans.recipient}">${trans.recipient}</a>`
+                                    let recipient_string = trans.recipient && trans.recipient.startsWith("Multipay (") ? trans.recipient : `<a href="${this.network.client.explorer}/wallets/${trans.recipient}">${trans.recipient}</a>`
                                     new_message += `- ${recipient_string} that is voting for ${dele_username} received ${amount} from ${sender_string}\n`
                                     new_message += `<a href="${this.network.client.explorer}/transaction/${trans.id}">View on explorer</a>\n`
                                     n_iterations += 1;
