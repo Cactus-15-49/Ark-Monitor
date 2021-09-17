@@ -51,7 +51,7 @@ export class Telegram_bot{
           })
 
         this.bot.on('message', (ctx: UContext) => {
-            if (ctx.message != undefined)
+            if (ctx.message != undefined && ctx.text != undefined)
                 this.message_handler.handle(ctx);
             
         })
