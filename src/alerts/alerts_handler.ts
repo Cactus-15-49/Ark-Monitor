@@ -127,7 +127,7 @@ export class alerts_handler{
                 for (let address of addresses){
                     let alerts = await this.db.get_voter_by_address_and_transaction(address);
                     for (let alert of alerts){
-                        this.bot.sendMessage(alert.chat_id, `NEW TRANSACTION\n${await this.display_transactions.display(transaction, alert.address, alert.chat_id)}`, Extra.HTML());
+                        this.bot.sendMessage(alert.chat_id, `NEW TRANSACTION\n${await this.display_transactions.display(transaction, alert.address, alert.chat_id)}`, Extra.webPreview(false).HTML());
                     }
                 }
                 
@@ -459,7 +459,7 @@ export class alerts_handler{
                         if (new_message != "" && (message + new_message).length >= 4000){
                             for (let chat of chat_id_list){
                                 if (((chat.Votes !== "OFF" && (delta_votes.isLessThan(new Utils.BigNumber(Number(chat.Votes)).times(-100000000)) || delta_votes.isGreaterThan(new Utils.BigNumber(Number(chat.Votes)).times(100000000)))) || (chat.Position === "ON" &&  Math.abs(delta_rank) > 0) || (change_voters && chat.Voters == "ON")))
-                                    this.bot.sendMessage(chat.chat_id, message, Extra.HTML());
+                                    this.bot.sendMessage(chat.chat_id, message, Extra.webPreview(false).HTML());
             
                             }
                             message = new_message
@@ -478,7 +478,7 @@ export class alerts_handler{
                 if (message != ""){
                     for (let chat of chat_id_list){
                         if (((chat.Votes !== "OFF" && (delta_votes.isLessThan(new Utils.BigNumber(Number(chat.Votes)).times(-100000000)) || delta_votes.isGreaterThan(new Utils.BigNumber(Number(chat.Votes)).times(100000000)))) || (chat.Position === "ON" &&  Math.abs(delta_rank) > 0) || (change_voters && chat.Voters == "ON")))
-                            this.bot.sendMessage(chat.chat_id, message, Extra.HTML());
+                            this.bot.sendMessage(chat.chat_id, message, Extra.webPreview(false).HTML());
     
                     }
                 }
