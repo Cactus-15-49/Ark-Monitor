@@ -196,7 +196,7 @@ export class alerts_handler{
             const last_block_delegate: any = old_delegates.find(o => {return o.username === element.username});
             if (last_block_delegate !== undefined){
                 element.votediff = element.voteBalance.minus(last_block_delegate.voteBalance);
-                element.rankdiff = element.rank - last_block_delegate.rank;                
+                element.rankdiff = element.rank - last_block_delegate.rank;           
             }
             else{
                 element.votediff = Utils.BigNumber.ZERO;
@@ -317,6 +317,8 @@ export class alerts_handler{
                 const new_rank = delegate.rank;
                 const old_rank = new_rank - delta_rank;
                 const delta_votes = delegate.votediff;
+                const new_votes = delegate.voteBalance;
+                const old_votes = new_votes.minus(delta_votes);
                 this.logger.debug(delegate.username);
                 this.logger.debug(delta_rank);
                 this.logger.debug(new_rank);
@@ -326,11 +328,12 @@ export class alerts_handler{
 
                 if (delta_rank < 0) message += `Rank: ${old_rank} --(+${Math.abs(delta_rank)})--> ${new_rank}\n`
                 else if (delta_rank > 0) message += `Rank: ${old_rank} --(-${Math.abs(delta_rank)})--> ${new_rank}\n`
-                else message += `Rank remain the same (${old_rank})\n`
+                else message += `Rank remains the same (${old_rank})\n`
 
-                if (delta_votes.isNegative())  message += `You lost ${BigIntToBString(delta_votes.times(-1), 0)} ${this.network.client.token} votes\n`
-                else if (delta_votes.isGreaterThan(0)) message += `You got ${BigIntToBString(delta_votes, 0)} ${this.network.client.token} votes\n`
-                else message += "Votes remain the same.\n"
+
+                if (delta_votes.isNegative()) message += `Votes: ${BigIntToBString(old_votes,0)} --(-${BigIntToBString(delta_votes.times(-1), 0)})--> ${BigIntToBString(new_votes,0)}\n`
+                else if (delta_votes.isGreaterThan(0)) message += `Votes: ${BigIntToBString(old_votes,0)} --(+${BigIntToBString(delta_votes, 0)})--> ${BigIntToBString(new_votes,0)}\n`
+                else message += `Votes remain the same (${BigIntToBString(new_votes,0)})\n`
 
                 if (old_rank <= milestone.activeDelegates && milestone.activeDelegates < new_rank) {
                     message += "\n\nYOU ARE NOW A STANDBY DELEGATE AND YOU ARE NOT FORGING ANYMORE\n\n"
