@@ -345,12 +345,11 @@ export class alerts_handler{
 
                     if (this.missing_delegates.has(delegate.publicKey)){
                         const consecutive = this.missing_delegates.get(delegate.publicKey);
-                        this.missing_delegates.delete(delegate.publicKey);
                         const delegate_chat = await this.db.get_all_delegates_Missing(delegate.username);
     
                         const voter_list = await this.db.get_all_voters_Rednodes();
                         for (let chat of delegate_chat){
-                            this.bot.sendMessage(chat.chat_id, `${delegate.username} is out because he was read. \nMissed blocks: ${consecutive}`);
+                            this.bot.sendMessage(chat.chat_id, `${delegate.username} is out because he was red. \nMissed blocks: ${consecutive}`);
                         }
                         for (let voter of voter_list){
                             let wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);

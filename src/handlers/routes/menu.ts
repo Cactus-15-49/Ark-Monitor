@@ -199,10 +199,14 @@ export class menu {
         let red = ""
         let n_orange = 0
         let n_red = 0
+        const current_height = this.blockchain.getLastHeight();
+        const milestone = Managers.configManager.getMilestone(current_height);
         const rednodes = this.alerts_handler.get_missing_delegates();
         rednodes.forEach((missed, pkey) => {
             const red_delegate_wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(pkey);
             const username = red_delegate_wallet.getAttribute("delegate.username");
+            const rank = red_delegate_wallet.getAttribute("delegate.rank");
+            if (rank > milestone.activeDelegates) return;
             if (missed === 1){
                 n_orange +=1;
                 orange += `\n${username} is orange`;
@@ -429,7 +433,7 @@ export class menu {
                             `└ Height: ${BigIntToBString(last_block_height, 0, 0)}\n└ Timestamp: ${Utils.formatTimestamp(delegateAttribute.lastBlock.timestamp).human}\n`
                 const missed_blocks = this.alerts_handler.get_missing_delegates();
                 const missed = missed_blocks.get(pkey);
-                if (missed !== undefined){
+                if (missed !== undefined && rank <= milestone.activeDelegates){
                     message += `YOUR NODE IS RED\nYOUR ${this.get_delegate_name().toUpperCase()} HAS MISSED ${missed} BLOCKS SO FAR!\n`
                 }
                 
