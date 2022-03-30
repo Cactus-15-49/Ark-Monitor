@@ -17,7 +17,7 @@ export class alerts_handler{
     private readonly events!: Contracts.Kernel.EventDispatcher;
 
     @Container.inject(Container.Identifiers.DposState)
-    @Container.tagged("state", "blockchain")
+    @Container.tagged("state", "clone")
     private readonly delegates!: Contracts.State.DposState;
 
     @Container.inject(Container.Identifiers.BlockchainService)
@@ -83,7 +83,7 @@ export class alerts_handler{
                 });
                 const old_delegates = this.LAST_BLOCK_DELEGATES.map(obj => ({...obj}));
                 this.LAST_BLOCK_DELEGATES = new_block_delegates.map(obj => ({...obj}));
-                this.process_new_block(new_block_delegates, old_delegates , data.data);
+                this.process_new_block(new_block_delegates.map(obj => ({...obj})), old_delegates , data.data);
 
                 const producer: string = data.data.generatorPublicKey;
                 const delegate: Contracts.State.Wallet = this.wallets.findByPublicKey(producer);
