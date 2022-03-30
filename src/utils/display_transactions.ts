@@ -1,5 +1,5 @@
-import { Container, Contracts, Utils } from "@arkecosystem/core-kernel";
-import { Managers, Interfaces } from "@arkecosystem/crypto";
+import { Container, Contracts, Utils } from "@solar-network/core-kernel";
+import { Managers, Interfaces } from "@solar-network/crypto";
 import { Voter } from "../interfaces";
 import { BigIntToBString } from "./utils";
 

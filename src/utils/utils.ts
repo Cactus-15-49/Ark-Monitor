@@ -1,5 +1,5 @@
 
-import { Utils } from "@arkecosystem/core-kernel";
+import { Utils } from "@solar-network/core-kernel";
 
 
 export const BigIntToString = (bigint: Utils.BigNumber | number, approx: number, decimals: number = 8) => {

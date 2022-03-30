@@ -1,6 +1,6 @@
-import { Container, Contracts, Enums, Utils, Providers, Services} from "@arkecosystem/core-kernel";
-import { Managers } from "@arkecosystem/crypto";
-import { Repositories } from "@arkecosystem/core-database";
+import { Container, Contracts, Enums, Utils, Providers, Services} from "@solar-network/core-kernel";
+import { Managers } from "@solar-network/crypto";
+import { Repositories } from "@solar-network/core-database";
 import { Telegram, Extra } from "telegraf";
 import { BigIntToBString } from "../utils/utils";
 

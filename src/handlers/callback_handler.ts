@@ -1,5 +1,5 @@
-import { Container, Contracts, Providers } from "@arkecosystem/core-kernel";
-import { Managers, Interfaces } from "@arkecosystem/crypto";
+import { Container, Contracts, Providers } from "@solar-network/core-kernel";
+import { Managers, Interfaces } from "@solar-network/crypto";
 import { Extra } from "telegraf";
 import { coingecko_request } from "../utils/coingecko";
 import { UContext } from "../interfaces";

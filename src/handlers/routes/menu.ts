@@ -1,5 +1,5 @@
-import { Container, Contracts, Utils, Providers, Services } from "@arkecosystem/core-kernel";
-import { Managers, Interfaces } from "@arkecosystem/crypto";
+import { Container, Contracts, Utils, Providers, Services } from "@solar-network/core-kernel";
+import { Managers, Interfaces } from "@solar-network/crypto";
 import { Markup } from "telegraf";
 import { BigIntToString, BigIntToBString } from "../../utils/utils";
 import { coingecko_request } from "../../utils/coingecko";

@@ -1,5 +1,5 @@
 
-import { Container, Contracts, Providers } from "@arkecosystem/core-kernel";
+import { Container, Contracts, Providers } from "@solar-network/core-kernel";
 import { Telegraf } from "telegraf";
 import { UContext } from "./interfaces";
 
