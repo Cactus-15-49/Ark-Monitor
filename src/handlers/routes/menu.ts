@@ -388,7 +388,7 @@ export class menu {
                 message += `(Resigned) ${username}\n`;
             }else{
                 message += `(${rank}) ${username}\n`
-                message += `VOTES: ${BigIntToBString(delegateAttribute.voteBalance, 2)} ${this.network.client.token} (${Utils.delegateCalculator.calculateApproval(wallet)}%)\n`
+                message += `VOTES: ${BigIntToBString(delegateAttribute.voteBalance, 2)} ${this.network.client.token} (${Utils.delegateCalculator.calculateApproval(wallet, Utils.supplyCalculator.calculate(this.wallets.allByAddress()))}%)\n`
 
                 const minor_rank = needed_delegates.find(delegate => delegate.getAttribute("delegate.rank") - rank === 1);
                 const greater_rank = needed_delegates.find(delegate => delegate.getAttribute("delegate.rank") - rank === -1);
