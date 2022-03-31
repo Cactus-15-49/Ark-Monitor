@@ -73,6 +73,14 @@ export class message_handler {
                     'buttons': {
                         'text': this.init.voter_check,
                         '/back': (ctx: UContext)=> { this.menu_utils.handle_back(ctx, 1 , "", this.init.init)}
+                    },
+                    'name': {
+                        'any': {
+                            'buttons': {
+                                '/continue': this.init.skip_add_name,
+                                'text': this.init.add_name
+                            }
+                        }
                     }
                 }
             },
