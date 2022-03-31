@@ -395,13 +395,15 @@ export class menu {
                 const forge_rank = needed_delegates.find(delegate => delegate.getAttribute("delegate.rank") === milestone.activeDelegates);
                 const forge_rank_less_1 = needed_delegates.find(delegate => delegate.getAttribute("delegate.rank") === milestone.activeDelegates + 1);
                 if (rank <= milestone.activeDelegates){
-                    message += `└ TO ${milestone.activeDelegates + 1}: `;
-                    if (forge_rank_less_1 != undefined)
-                    message += `${BigIntToBString(forge_rank_less_1.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)} ${this.network.client.token}\n`
+                    if (forge_rank != undefined) {
+                        message += `└ TO ${milestone.activeDelegates + 1}: `;
+                        message += `${BigIntToBString(forge_rank.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)} ${this.network.client.token}\n`
+                    }
                 }else{
-                    message += `└ TO ${milestone.activeDelegates}: `;
-                    if (forge_rank != undefined)
-                    message += `${BigIntToBString(forge_rank.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)} ${this.network.client.token}\n`
+                    if (forge_rank != undefined) {
+                        message += `└ TO ${milestone.activeDelegates}: `;
+                        message += `${BigIntToBString(forge_rank.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)} ${this.network.client.token}\n`
+                    }
                 }
                 
                 if (minor_rank != undefined)
