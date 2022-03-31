@@ -395,9 +395,9 @@ export class menu {
                 const forge_rank = needed_delegates.find(delegate => delegate.getAttribute("delegate.rank") === milestone.activeDelegates);
                 const forge_rank_less_1 = needed_delegates.find(delegate => delegate.getAttribute("delegate.rank") === milestone.activeDelegates + 1);
                 if (rank <= milestone.activeDelegates){
-                    if (forge_rank != undefined) {
+                    if (forge_rank_less_1 != undefined) {
                         message += `└ TO ${milestone.activeDelegates + 1}: `;
-                        message += `${BigIntToBString(forge_rank.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)} ${this.network.client.token}\n`
+                        message += `${BigIntToBString(forge_rank_less_1.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)} ${this.network.client.token}\n`
                     }
                 }else{
                     if (forge_rank != undefined) {
