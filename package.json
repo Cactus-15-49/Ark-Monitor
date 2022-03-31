@@ -12,7 +12,8 @@
         "dist"
     ],
     "scripts": {
-        "build": "pnpm build -r",
+        "build": "pnpm clean && tsc",
+        "clean": "rimraf dist",
         "format": "pnpm lint:fix && pnpm prettier",
         "lint": "eslint packages/*/src --ext .ts --max-warnings 0",
         "lint:fix": "eslint packages/*/src --ext .ts --fix",
@@ -24,7 +25,13 @@
         "telegraf": "^3.38.0"
     },
     "devDependencies": {
-        "@solar-network/core": "workspace:*"
+        "@solar-network/core": "workspace:*",
+        "@solar-network/core-blockchain": "workspace:*",
+        "@solar-network/core-kernel": "workspace:*",
+        "@solar-network/core-state": "workspace:*",
+        "@solar-network/core-database": "workspace:*",
+        "@solar-network/crypto": "workspace:*",
+        "@solar-network/utils": "workspace:*"
     },
     "jest": {
         "preset": "../../jest-preset.json"
