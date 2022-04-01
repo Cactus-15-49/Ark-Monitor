@@ -10,7 +10,7 @@ export class Database{
     private readonly configuration!: Providers.PluginConfiguration;
     
     public connect() {
-        mongoose.connect(`mongodb://localhost/${this.configuration.get("databaseName")}`, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: true });
+        mongoose.connect(`mongodb://localhost/${this.configuration.get("databaseName")}`, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, useCreateIndex: true });
     }
 
     public async create_user(chat_id: number){
