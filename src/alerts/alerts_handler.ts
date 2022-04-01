@@ -1,4 +1,4 @@
-import { Container, Contracts, Enums, Utils, Providers, Services} from "@solar-network/core-kernel";
+import { Container, Contracts, Enums, Utils, Providers} from "@solar-network/core-kernel";
 import { Managers } from "@solar-network/crypto";
 import { Repositories } from "@solar-network/core-database";
 import { Telegram, Extra } from "telegraf";
@@ -7,18 +7,11 @@ import { BigIntToBString } from "../utils/utils";
 @Container.injectable()
 export class alerts_handler{
 
-    @Container.inject(Container.Identifiers.Application)
-    private readonly app!: Contracts.Kernel.Application;
-
     @Container.inject(Container.Identifiers.LogService)
     private readonly logger!: Contracts.Kernel.Logger;
 
     @Container.inject(Container.Identifiers.EventDispatcherService)
     private readonly events!: Contracts.Kernel.EventDispatcher;
-
-    @Container.inject(Container.Identifiers.DposState)
-    @Container.tagged("state", "clone")
-    private readonly delegates!: Contracts.State.DposState;
 
     @Container.inject(Container.Identifiers.BlockchainService)
     private readonly blockchain!: Contracts.Blockchain.Blockchain;
@@ -51,6 +44,7 @@ export class alerts_handler{
     private LAST_BLOCK_DELEGATES: Array<any> = [];
     private transactions_queue: Array<any> = [];
 
+
     public missing_delegates;
 
 
@@ -61,23 +55,17 @@ export class alerts_handler{
         if (!token){ this.logger.error("Token not set. The bot will not send out notifications."); return; }
         this.bot = new Telegram(token);
 
-
-
-
-
-        await this.app.get<Services.Triggers.Triggers>(Container.Identifiers.TriggerService).call("buildDelegateRanking", { dposState: this.delegates });
-        this.LAST_BLOCK_DELEGATES = this.delegates.getActiveDelegates().map(delegate => {
+        this.LAST_BLOCK_DELEGATES = this.getDelegateRankList().map(delegate => {
             const pkey = delegate.getPublicKey();
-            let del = delegate.getAttribute("delegate");
+            let del = {...delegate.getAttribute("delegate")};
             del.publicKey = pkey;
             return del;
         });
         this.events.listen(Enums.BlockEvent.Applied, {
             handle: async (data) => {
-                await this.app.get<Services.Triggers.Triggers>(Container.Identifiers.TriggerService).call("buildDelegateRanking", { dposState: this.delegates });
-                const new_block_delegates = this.delegates.getActiveDelegates().map(delegate => {
+                const new_block_delegates = this.getDelegateRankList().map(delegate => {
                     const pkey = delegate.getPublicKey();
-                    let del = delegate.getAttribute("delegate");
+                    let del = {...delegate.getAttribute("delegate")};
                     del.publicKey = pkey;
                     return del;
                 });
@@ -529,6 +517,48 @@ export class alerts_handler{
             current_round -=1;
         }
         this.logger.debug("CALCULATION MISSED BLOCKS FINISHED")
+    }
+
+    public getDelegateRankList(): Array<Contracts.State.Wallet>{
+        const activeDelegates: Array<Contracts.State.Wallet> = [];
+
+        for (const delegate of this.wallets.allByUsername()) {
+            if (!delegate.hasAttribute("delegate.resigned")) {
+                const delegateCopy = {...delegate};
+                delegateCopy.setAttribute("delegate", {...delegate.getAttribute("delegate")});
+                activeDelegates.push(delegateCopy);
+            }
+        }
+
+        activeDelegates.sort((a, b) => {
+            const voteBalanceA: Utils.BigNumber = a.getAttribute("delegate.voteBalance");
+            const voteBalanceB: Utils.BigNumber = b.getAttribute("delegate.voteBalance");
+
+            const diff = voteBalanceB.comparedTo(voteBalanceA);
+
+            if (diff === 0) {
+                Utils.assert.defined<string>(a.getPublicKey());
+                Utils.assert.defined<string>(b.getPublicKey());
+
+                if (a.getPublicKey() === b.getPublicKey()) {
+                    const username = a.getAttribute("delegate.username");
+                    throw new Error(
+                        `The balance and public key of both delegates are identical! ` +
+                            `Delegate "${username}" appears twice in the list`,
+                    );
+                }
+
+                return a.getPublicKey()!.localeCompare(b.getPublicKey()!, "en");
+            }
+
+            return diff;
+        });
+
+        for (let i = 0; i < activeDelegates.length; i++) {
+            activeDelegates[i].setAttribute("delegate.rank", i + 1);
+        }
+
+        return activeDelegates;
     }
 
     public get_missing_delegates = () => {

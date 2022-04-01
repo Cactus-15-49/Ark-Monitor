@@ -1,4 +1,4 @@
-import { Container, Contracts, Utils, Providers, Services } from "@solar-network/core-kernel";
+import { Container, Contracts, Utils, Providers } from "@solar-network/core-kernel";
 import { Managers, Interfaces } from "@solar-network/crypto";
 import { Markup } from "telegraf";
 import { BigIntToString, BigIntToBString } from "../../utils/utils";
@@ -7,9 +7,6 @@ import { UContext } from "../../interfaces";
 
 @Container.injectable()
 export class menu {
-
-    @Container.inject(Container.Identifiers.Application)
-    private readonly app!: Contracts.Kernel.Application;
 
     @Container.inject(Container.Identifiers.WalletRepository)
     @Container.tagged("state", "blockchain")
@@ -26,10 +23,6 @@ export class menu {
 
     @Container.inject(Container.Identifiers.BlockchainService)
     private readonly blockchain!: Contracts.Blockchain.Blockchain;
-
-    @Container.inject(Container.Identifiers.DposState)
-    @Container.tagged("state", "blockchain")
-    private readonly dpos_state!: Contracts.State.DposState;
 
     @Container.inject(Symbol.for("menu_utils"))
     private readonly menu_utils;
@@ -374,10 +367,8 @@ export class menu {
             const produced = delegateAttribute.producedBlocks;
             const rank = delegateAttribute.rank;
 
-            await this.app.get<Services.Triggers.Triggers>(Container.Identifiers.TriggerService).call("buildDelegateRanking", { dposState: this.dpos_state });
-
             
-            const needed_delegates = this.dpos_state.getActiveDelegates().filter(delegate => {
+            const needed_delegates = this.alerts_handler.getDelegateRankList().filter(delegate => {
                 if (!(delegate.hasAttribute("delegate.rank"))) return false;
                 const delegate_rank = delegate.getAttribute("delegate.rank");
                 return (Math.abs(delegate_rank - rank) === 1 || delegate_rank === milestone.activeDelegates || delegate_rank === milestone.activeDelegates + 1);
