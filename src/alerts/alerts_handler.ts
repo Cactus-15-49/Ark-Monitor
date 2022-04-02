@@ -524,9 +524,7 @@ export class alerts_handler{
 
         for (const delegate of this.wallets.allByUsername()) {
             if (!delegate.hasAttribute("delegate.resigned")) {
-                const delegateCopy = {...delegate};
-                delegateCopy.setAttribute("delegate", {...delegate.getAttribute("delegate")});
-                activeDelegates.push(delegateCopy);
+                activeDelegates.push(delegate.clone());
             }
         }
 
