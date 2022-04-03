@@ -91,7 +91,12 @@ export class display_transactions {
         const votes = tx.asset.votes;
         let transaction = "";
         for (const vote of votes){
-            const delegate: Contracts.State.Wallet = this.wallets.findByPublicKey(vote.substring(1));
+            let delegate: Contracts.State.Wallet;
+            if (vote.length > 21) {
+                delegate = this.wallets.findByPublicKey(vote.substring(1));
+            } else {
+                delegate = this.wallets.findByUsername(vote.substring(1));
+            }
             if (vote[0] === "+")
                 transaction += `You voted for ${delegate.getAttribute("delegate.username")}\n`
             else 

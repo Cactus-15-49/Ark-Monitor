@@ -240,7 +240,12 @@ export class alerts_handler{
                         return false;
                     }
                     else if (o.typeGroup == 1 && o.type == 3){
-                        return (o.asset.votes.includes("+" + wallet.publicKey) !== o.asset.votes.includes("-" + wallet.publicKey));
+                        return (
+                            (o.asset.votes.includes("+" + wallet.publicKey) !== o.asset.votes.includes("-" + wallet.publicKey)) ||
+                            (o.asset.votes.includes("+" + wallet.username) !== o.asset.votes.includes("-" + wallet.username)) ||
+                            (o.asset.votes.includes("+" + wallet.publicKey) !== o.asset.votes.includes("-" + wallet.username)) ||
+                            (o.asset.votes.includes("+" + wallet.username) !== o.asset.votes.includes("-" + wallet.publicKey))
+                            );
                     }else if (o.typeGroup == 1 && o.type == 6){
                         return (wallet.username === o.sendervote) || (o.asset.payments.filter((o) => { return (o.vote === wallet.username && o.vote !== o.sendervote)}).length > 0);
                     }else if (o.typeGroup == 1 && o.type == 0){
@@ -257,7 +262,7 @@ export class alerts_handler{
                         const sender_wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(transaction.senderPublicKey);
                         sender = sender_wallet.getAddress();
                         amount = sender_wallet.getBalance();
-                        if (transaction.asset.votes.includes("+" + wallet.publicKey)){
+                        if (transaction.asset.votes.includes("+" + wallet.publicKey) || transaction.asset.votes.includes("+" + wallet.username)){
                             type = 1;
                         }else{
                             type = 2;
