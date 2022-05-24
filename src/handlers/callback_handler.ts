@@ -28,11 +28,11 @@ export class callback_handler{
         const data: string | undefined = ctx.callbackQuery!.data;
         if (data === undefined) return;
         const data_array = data.split("_");
-        if (data_array.length == 2 && data_array[0] == 'update'){
-            if (data == 'update_balance') this.menu.balance(ctx);
-            else if (data == 'update_price') this.update_price(ctx);
-            else if (data == 'update_delegateinfo') this.menu.delegates_info(ctx);
-        }else if (data_array.length == 3){
+        if (data_array.length === 2 && data_array[0] === 'update'){
+            if (data === 'update_balance') this.menu.balance(ctx);
+            else if (data === 'update_price') this.update_price(ctx);
+            else if (data === 'update_delegateinfo') this.menu.delegates_info(ctx);
+        }else if (data_array.length === 3){
             const next = data_array[0] === "next";
             if (next === false && data_array[0] !== "previous") return;
             const current_page = Number(data_array[1]);
@@ -112,7 +112,7 @@ export class callback_handler{
             if (transactions.length <= 5) keyboard = (m) => m.inlineKeyboard([
                 m.callbackButton('1', 'a')
               ])
-            else if (start == transactions.length - 5 ) keyboard = (m) => m.inlineKeyboard([
+            else if (start === transactions.length - 5 ) keyboard = (m) => m.inlineKeyboard([
                 m.callbackButton('1', 'a'),
                 m.callbackButton('next', `next_1_${address}`)
               ])

@@ -15,7 +15,7 @@ export class notifications {
 
 
     public choose_voter = (ctx: UContext)=> {
-        const choice = ctx.user.voters.find((wallet) => wallet.name == ctx.text || wallet.address == ctx.text);
+        const choice = ctx.user.voters.find((wallet) => wallet.name === ctx.text || wallet.address === ctx.text);
         if (choice !== undefined){
             this.db.enter_menu(ctx.chat_id, ctx.user.states, "wallet/" + choice.address)
             ctx.reply(`REDNODES notify you when a ${this.get_delegate_name()} you are voting misses blocks.'
@@ -31,29 +31,29 @@ export class notifications {
     }
 
     public change_notification_voter = (ctx: UContext)=> {
-        const voter = ctx.user.voters.find((wallet) => wallet.address == ctx.user.states[3])!;
+        const voter = ctx.user.voters.find((wallet) => wallet.address === ctx.user.states[3])!;
         const text = ctx.text;
         const possible_notifications = ['Rednodes: ' + voter.Rednodes,"Out of Forging: " + voter.Out_of_forging, "Payments: " + voter.Transactions];
         const keyboard = () => { return [['Rednodes: ' + voter.Rednodes, "Out of Forging: " + voter.Out_of_forging],
                                                     ["Payments: " + voter.Transactions],
                                                     ["/Back"]]};
 
-        if (text == possible_notifications[0]){
-            if (voter.Rednodes == "OFF")
+        if (text === possible_notifications[0]){
+            if (voter.Rednodes === "OFF")
                 voter.Rednodes = "ON";
             else
                 voter.Rednodes = "OFF";
             ctx.reply(`REDNODES turned ${voter.Rednodes}.`,  {reply_markup: Markup.keyboard(keyboard())});
         }
-        else if (text == possible_notifications[1]){
-            if (voter.Out_of_forging == "OFF")
+        else if (text === possible_notifications[1]){
+            if (voter.Out_of_forging === "OFF")
                 voter.Out_of_forging = "ON";
             else
                 voter.Out_of_forging = "OFF";
             ctx.reply(`OUT OF FORGING turned ${voter.Out_of_forging}.`,  {reply_markup: Markup.keyboard(keyboard())});
         }
-        else if (text == possible_notifications[2]){
-            if (voter.Transactions == "OFF")
+        else if (text === possible_notifications[2]){
+            if (voter.Transactions === "OFF")
                 voter.Transactions = "ON";
             else
                 voter.Transactions = "OFF";
@@ -63,7 +63,7 @@ export class notifications {
     }
 
     public choose_delegate = (ctx: UContext)=> {
-        const choice = ctx.user.delegates.find((wallet) => wallet.username == ctx.text);
+        const choice = ctx.user.delegates.find((wallet) => wallet.username === ctx.text);
         if (choice !== undefined){
             this.db.enter_menu(ctx.chat_id, ctx.user.states, "delegate/" + choice.address)
             ctx.reply(`'REDNODE notify you when your ${this.get_delegate_name()} misses blocks. 
@@ -87,31 +87,31 @@ export class notifications {
     }
 
     public change_notification_delegate = (ctx: UContext)=> {
-        const delegate = ctx.user.delegates.find((wallet) => wallet.address == ctx.user.states[3])!;
+        const delegate = ctx.user.delegates.find((wallet) => wallet.address === ctx.user.states[3])!;
         const text = ctx.text;
         const possible_notifications = ['Rednode: ' + delegate.Missing,"Position: " + delegate.Position, ["Votes: " + delegate.Votes, "Votes: ON/Cap: " + delegate.Votes], "Voters: " + delegate.Voters];
         const keyboard = () => { 
-            if (delegate.Votes == "OFF")
+            if (delegate.Votes === "OFF")
                 return [['Rednode: ' + delegate.Missing, "Position: " + delegate.Position], ["Votes: " + delegate.Votes, "Voters: " + delegate.Voters], ["/Back"]];
             return  [['Rednode: ' + delegate.Missing, "Position: " + delegate.Position], ["Votes: ON/Cap: " + delegate.Votes, "Voters: " + delegate.Voters], ["/Back"]];
         };
 
-        if (text == possible_notifications[0]){
-            if (delegate.Missing == "OFF")
+        if (text === possible_notifications[0]){
+            if (delegate.Missing === "OFF")
                 delegate.Missing = "ON";
             else
                 delegate.Missing = "OFF";
             ctx.reply(`REDNODE turned ${delegate.Missing}.`,  {reply_markup: Markup.keyboard(keyboard())});
         }
-        else if (text == possible_notifications[1]){
-            if (delegate.Position == "OFF")
+        else if (text === possible_notifications[1]){
+            if (delegate.Position === "OFF")
                 delegate.Position = "ON";
             else
                 delegate.Position = "OFF";
             ctx.reply(`POSITION turned ${delegate.Position}.`,  {reply_markup: Markup.keyboard(keyboard())});
         }
         else if (possible_notifications[2].includes(text)){
-            if (delegate.Votes == "OFF"){
+            if (delegate.Votes === "OFF"){
                 this.db.enter_menu(ctx.chat_id, ctx.user.states, "cap")
                 ctx.reply("Insert the minimum amount of vote changes that should trigger a notification",
                                 {reply_markup: Markup.keyboard([["/Back"]])})
@@ -121,8 +121,8 @@ export class notifications {
                 ctx.reply(`VOTES turned ${delegate.Votes}.`,  {reply_markup: Markup.keyboard(keyboard())}); 
             }      
         }
-        else if (text == possible_notifications[3]){
-            if (delegate.Voters == "OFF")
+        else if (text === possible_notifications[3]){
+            if (delegate.Voters === "OFF")
                 delegate.Voters = "ON";
             else
                 delegate.Voters = "OFF";
@@ -133,13 +133,13 @@ export class notifications {
 
     public change_cap = (ctx: UContext)=> {
         const text = ctx.text;
-        const delegate = ctx.user.delegates.find((wallet) => wallet.address == ctx.user.states[3])!;
+        const delegate = ctx.user.delegates.find((wallet) => wallet.address === ctx.user.states[3])!;
         const keyboard = () => { 
-            if (delegate.Votes == "OFF")
+            if (delegate.Votes === "OFF")
                 return [['Rednode: ' + delegate.Missing, "Position: " + delegate.Position], ["Votes: " + delegate.Votes, "Voters: " + delegate.Voters], ["/Back"]];
             return  [['Rednode: ' + delegate.Missing, "Position: " + delegate.Position], ["Votes: ON/Cap: " + delegate.Votes, "Voters: " + delegate.Voters], ["/Back"]];
         };
-        if (text == "/Back"){
+        if (text === "/Back"){
             this.db.go_back(ctx.chat_id, ctx.user.states);
             ctx.reply('VOTES remain OFF.',  {reply_markup: Markup.keyboard(keyboard())})
         }

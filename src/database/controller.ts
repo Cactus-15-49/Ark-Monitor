@@ -81,7 +81,7 @@ export class Database{
 
     public async get_user(chat_id: number){
         let user = await users.findOne({chat_id});
-        if (user == null){
+        if (user === null){
             try{
                 await this.create_user(chat_id);
             }

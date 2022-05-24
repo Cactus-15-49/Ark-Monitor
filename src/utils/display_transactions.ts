@@ -178,7 +178,7 @@ export class display_transactions {
         else
             string_duration = "??"
         let transaction: string;
-        if (recipient == address){
+        if (recipient === address){
             transaction = `You staked ß ${BigIntToBString(amount, 2)} for ${string_duration}\nTimestamp: ${tx.timestamp}`;
         }else{
             transaction = `You sent to ${recipient} ß ${BigIntToBString(amount, 2)} staked for ${string_duration}\nTimestamp: ${tx.timestamp}`;
