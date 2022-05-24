@@ -71,7 +71,7 @@ export class menu {
             }
             
             if (wallet.hasAttribute("vote")){
-                const delegate: Contracts.State.Wallet = this.wallets.findByusername(wallet.getAttribute("vote"));
+                const delegate: Contracts.State.Wallet = this.wallets.findByUsername(wallet.getAttribute("vote"));
                 answer += `Vote: ${delegate.getAttribute("delegate.username")}`;
                 if (delegate.hasAttribute("delegate.resigned") && delegate.getAttribute("delegate.resigned")) {
                     answer += " (Resigned)";
