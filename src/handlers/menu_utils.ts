@@ -21,7 +21,7 @@ export class menu_utils {
         const current_states: string[] = ctx.user.states;
         const states_array_length = current_states.length;
         if (states_array_length <= number_back + 1 ){
-            if (current_states[0] == "init"){
+            if (current_states[0] === "init"){
                 ctx.user.states = ["start"];
                 this.db.change_root(ctx.chat_id, "start");
             }else {
@@ -41,18 +41,18 @@ export class menu_utils {
         this.logger.debug(`${ctx.chat_id} sent to menu`)
         const delegates = await this.db.get_delegates(ctx.chat_id);
         const voters = await this.db.get_voters(ctx.chat_id);
-        if (delegates.length == 0){
+        if (delegates.length === 0){
             ctx.reply('MENU',
                         {reply_markup: Markup.keyboard([["Balance", "Last transactions"], ["Rednodes", "Price"],
                         ["Notifications", "Links"], ["Send feedback", "Bot Info"], ["Settings"]])})
-        }else if (voters.length == 0){
+        }else if (voters.length === 0){
             ctx.reply('MENU\n',
                             {reply_markup: Markup.keyboard([["Delegates info", "Last transactions"], [" Price", "Rednodes"],
                             ["Notifications", "Links"], ["Send feedback", "Settings"], ["Bot Info"]])})
         }
         else {
             const user = await this.db.get_user(ctx.chat_id); 
-            if (user.state.split("/")[0] == "Dmenu"){
+            if (user.state.split("/")[0] === "Dmenu"){
                 ctx.reply(`${this.get_delegate_name().toUpperCase()} MENU`,
                                  {reply_markup: Markup.keyboard([["Delegates info", "Last transactions"], ["Price", "Rednodes"],
                                     ["Notifications", "Links"], ["Send feedback", "Go to Voters"],

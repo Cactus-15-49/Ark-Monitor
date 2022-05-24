@@ -34,11 +34,11 @@ export class Telegram_bot{
         this.message_handler.setup();
         this.bot.use(async (ctx, next) => {
             if (ctx.from) {
-                if (ctx.message != undefined){
+                if (ctx.message !== undefined){
                     ctx.text = ctx.message.text;
                     ctx.chat_id = ctx.message.chat.id;
                 }
-                if (ctx.callbackQuery != undefined){
+                if (ctx.callbackQuery !== undefined){
                     ctx.chat_id = ctx.callbackQuery.message.chat.id;
                 }
                 ctx.user = await this.db.get_user(ctx.chat_id); 
@@ -51,7 +51,7 @@ export class Telegram_bot{
           })
 
         this.bot.on('message', (ctx: UContext) => {
-            if (ctx.message != undefined && ctx.text != undefined)
+            if (ctx.message !== undefined && ctx.text !== undefined)
                 this.message_handler.handle(ctx);
             
         })

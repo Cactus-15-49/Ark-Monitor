@@ -71,7 +71,7 @@ export class menu {
             }
             
             if (wallet.hasAttribute("vote")){
-                const delegate: Contracts.State.Wallet = this.wallets.findByPublicKey(wallet.getAttribute("vote"));
+                const delegate: Contracts.State.Wallet = this.wallets.findByusername(wallet.getAttribute("vote"));
                 answer += `Vote: ${delegate.getAttribute("delegate.username")}`;
                 if (delegate.hasAttribute("delegate.resigned") && delegate.getAttribute("delegate.resigned")) {
                     answer += " (Resigned)";
@@ -209,7 +209,7 @@ export class menu {
                     const voting_wallet = ctx.user.voters.filter((voter) =>{
                         const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
                         if (wallet.hasVoted()){
-                            return (wallet.getAttribute("vote") === pkey);
+                            return (wallet.getAttribute("vote") === username);
                         }
                         return false;
                     })
@@ -230,7 +230,7 @@ export class menu {
                     const voting_wallet = ctx.user.voters.filter((voter) =>{
                         const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
                         if (wallet.hasVoted()){
-                            return (wallet.getAttribute("vote") === pkey);
+                            return (wallet.getAttribute("vote") === username);
                         }
                         return false;
                     })
@@ -243,11 +243,11 @@ export class menu {
             }
         });
         
-        if (orange != "")
+        if (orange !== "")
             ctx.reply(`ORANGE NODES (${n_orange}).${orange}`);
-        if (red != "")
+        if (red !== "")
             ctx.reply(`RED NODES (${n_red}).${red}`);
-        if (orange == "" && red == "")
+        if (orange === "" && red === "")
             ctx.reply("No rednodes");
                 
     }
@@ -300,9 +300,9 @@ export class menu {
     }
     
     public change_menu = (ctx: UContext) =>  {
-        if (ctx.user.states[0] == "Dmenu" && ctx.user.voters.length){
+        if (ctx.user.states[0] === "Dmenu" && ctx.user.voters.length){
             this.db.change_root(ctx.chat_id, "Vmenu");
-        }else if (ctx.user.states[0] == "Vmenu" && ctx.user.delegates.length){
+        }else if (ctx.user.states[0] === "Vmenu" && ctx.user.delegates.length){
             this.db.change_root(ctx.chat_id, "Dmenu");
         }
         this.menu_utils.display_menu(ctx);
@@ -386,20 +386,20 @@ export class menu {
                 const forge_rank = needed_delegates.find(delegate => delegate.getAttribute("delegate.rank") === milestone.activeDelegates);
                 const forge_rank_less_1 = needed_delegates.find(delegate => delegate.getAttribute("delegate.rank") === milestone.activeDelegates + 1);
                 if (rank <= milestone.activeDelegates){
-                    if (forge_rank_less_1 != undefined) {
+                    if (forge_rank_less_1 !== undefined) {
                         message += `└ TO ${milestone.activeDelegates + 1}: `;
                         message += `${BigIntToBString(forge_rank_less_1.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)} ${this.network.client.token}\n`
                     }
                 }else{
-                    if (forge_rank != undefined) {
+                    if (forge_rank !== undefined) {
                         message += `└ TO ${milestone.activeDelegates}: `;
                         message += `${BigIntToBString(forge_rank.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)} ${this.network.client.token}\n`
                     }
                 }
                 
-                if (minor_rank != undefined)
+                if (minor_rank !== undefined)
                     message += `└ TO -1: ${BigIntToBString(minor_rank.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)} ${this.network.client.token}\n`
-                if (greater_rank != undefined)
+                if (greater_rank !== undefined)
                     message += `└ TO +1: ${BigIntToBString(greater_rank.getAttribute("delegate.voteBalance").minus(delegateAttribute.voteBalance), 2)} ${this.network.client.token}\n\n`
 
                 
@@ -415,11 +415,11 @@ export class menu {
                     const s = Math.floor(d % 3600 % 60);
                     
                     if (h > 0){
-                        return h + (h == 1 ? " hour" : " hours");
+                        return h + (h === 1 ? " hour" : " hours");
                     }else if (m > 0){
-                        return m + (m == 1 ? " minute" : " minutes");
+                        return m + (m === 1 ? " minute" : " minutes");
                     }
-                    return s + (s == 1 ? " second" : " seconds");
+                    return s + (s === 1 ? " second" : " seconds");
                 }
                 
                 message += `Last block forged ${secondsToHms((current_height - last_block_height)*milestone.blocktime)} ago\n` +

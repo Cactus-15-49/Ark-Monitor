@@ -87,7 +87,7 @@ export class alerts_handler{
                     }
                     for (let voter of voter_list){
                         let wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                        if (wallet.hasVoted() && wallet.getAttribute("vote") == producer){
+                        if (wallet.hasVoted() && wallet.getAttribute("vote") === username){
                             this.bot.sendMessage(voter.chat_id, `${username} (voted by ${voter.address}) is green again. \nMissed blocks: ${consecutive}`);
                         }
                     }  
@@ -146,7 +146,7 @@ export class alerts_handler{
                         }
                         for (let voter of voter_list){
                             const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                            if (wallet.hasVoted() && wallet.getAttribute("vote") == pkey){
+                            if (wallet.hasVoted() && wallet.getAttribute("vote") === username){
                                 this.bot.sendMessage(voter.chat_id, `${username} (voted by ${voter.address}) is Orange`);
                             }
                         }
@@ -156,7 +156,7 @@ export class alerts_handler{
                         }
                         for (let voter of voter_list){
                             let wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                            if (wallet.hasVoted() && wallet.getAttribute("vote") == pkey){
+                            if (wallet.hasVoted() && wallet.getAttribute("vote") === username){
                                 this.bot.sendMessage(voter.chat_id, `${username} (voted by ${voter.address}) is Red\nMissed blocks: ${consecutive}`);
                             }
                         }
@@ -167,7 +167,7 @@ export class alerts_handler{
                     }else if (consecutive % 212 === 0){
                         for (let voter of voter_list){
                             let wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                            if (wallet.hasVoted() && wallet.getAttribute("vote") == pkey){
+                            if (wallet.hasVoted() && wallet.getAttribute("vote") === username){
                                 this.bot.sendMessage(voter.chat_id, `${username} (voted by ${voter.address}) is Red\nMissed blocks: ${consecutive}`);
                             }
                         }
@@ -191,12 +191,12 @@ export class alerts_handler{
                 element.rankdiff = 0;
             }
             return element;
-        }).filter((element) => {return (!(element.votediff.isZero()) || element.rankdiff != 0)});
+        }).filter((element) => {return (!(element.votediff.isZero()) || element.rankdiff !== 0)});
         this.logger.debug("------------------------------------");
         if (delegates_difference.length > 0){
             const transactions = await this.get_block_transactions(block.height);
             const filtered_transactions = transactions.map((trans) => {
-                if (trans.typeGroup == 1 && trans.type == 3){
+                if (trans.typeGroup === 1 && trans.type === 3){
                     return trans;
                 }
 
@@ -204,16 +204,16 @@ export class alerts_handler{
                 const sender = this.wallets.findByPublicKey(trans.senderPublicKey);
                 if (sender.hasVoted()){
                     valid = true;
-                    const delegate: Contracts.State.Wallet = this.wallets.findByPublicKey(sender.getAttribute("vote"));
+                    const delegate: Contracts.State.Wallet = this.wallets.findByUsername(sender.getAttribute("vote"));
                     trans.sendervote = delegate.getAttribute("delegate.username");
                 }
-                if (trans.typeGroup == 1 && trans.type == 6){
+                if (trans.typeGroup === 1 && trans.type === 6){
                     let recipients = trans.asset.payments;
                     trans.asset.payments = recipients.map((o) => {
                         const single_recipient = this.wallets.findByAddress(o.recipientId);
                         if (single_recipient.hasVoted()){
                             valid = true;
-                            const delegate: Contracts.State.Wallet = this.wallets.findByPublicKey(single_recipient.getAttribute("vote"));
+                            const delegate: Contracts.State.Wallet = this.wallets.findByUsername(single_recipient.getAttribute("vote"));
                             o.vote = delegate.getAttribute("delegate.username");
                         }
                         return o;
@@ -225,7 +225,7 @@ export class alerts_handler{
                 
                     if (recipient.hasVoted() && recipient.getAddress() !== sender.getAddress()){
                         valid = true;
-                        const delegate: Contracts.State.Wallet = this.wallets.findByPublicKey(recipient.getAttribute("vote"));
+                        const delegate: Contracts.State.Wallet = this.wallets.findByUsername(recipient.getAttribute("vote"));
                         trans.recipientvote = delegate.getAttribute("delegate.username");
                     }
                 }
@@ -239,11 +239,11 @@ export class alerts_handler{
                     if (o === undefined){
                         return false;
                     }
-                    else if (o.typeGroup == 1 && o.type == 3){
+                    else if (o.typeGroup === 1 && o.type === 3){
                         return (o.asset.votes.includes("+" + wallet.publicKey) !== o.asset.votes.includes("-" + wallet.publicKey));
-                    }else if (o.typeGroup == 1 && o.type == 6){
+                    }else if (o.typeGroup === 1 && o.type === 6){
                         return (wallet.username === o.sendervote) || (o.asset.payments.filter((o) => { return (o.vote === wallet.username && o.vote !== o.sendervote)}).length > 0);
-                    }else if (o.typeGroup == 1 && o.type == 0){
+                    }else if (o.typeGroup === 1 && o.type === 0){
                         return ((wallet.username === o.sendervote ||  wallet.username === o.recipientvote) && o.sendervote !== o.recipientvote);
                     }
                     return false;
@@ -253,7 +253,7 @@ export class alerts_handler{
                     let recipient: string | undefined = undefined;
                     let amount = Utils.BigNumber.ZERO;
                     let id = transaction.id;
-                    if (transaction.typeGroup == 1 && transaction.type == 3){
+                    if (transaction.typeGroup === 1 && transaction.type === 3){
                         const sender_wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(transaction.senderPublicKey);
                         sender = sender_wallet.getAddress();
                         amount = sender_wallet.getBalance();
@@ -262,7 +262,7 @@ export class alerts_handler{
                         }else{
                             type = 2;
                         }
-                    }else if (transaction.typeGroup == 1 && transaction.type == 6){
+                    }else if (transaction.typeGroup === 1 && transaction.type === 6){
                         let multi_transactions: any[] = [];
                         const d_wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(transaction.senderPublicKey);
                         sender = d_wallet.getAddress();
@@ -271,7 +271,7 @@ export class alerts_handler{
                             for (let recipient of transaction.asset.payments){
                                 if (recipient.vote !== transaction.sendervote) amount = amount.plus(recipient.amount);
                             }
-                            if (amount == Utils.BigNumber.ZERO) return [];
+                            if (amount === Utils.BigNumber.ZERO) return [];
                             recipient = `Multipay (${transaction.asset.payments.length})`
                         }else {
                             type = 4
@@ -280,7 +280,7 @@ export class alerts_handler{
                             }
                             return multi_transactions;
                         }
-                    }else if (transaction.typeGroup == 1 && transaction.type == 0){
+                    }else if (transaction.typeGroup === 1 && transaction.type === 0){
                         recipient = transaction.recipientId;
                         const d_wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(transaction.senderPublicKey);
                         sender = d_wallet.getAddress();
@@ -312,7 +312,7 @@ export class alerts_handler{
                 this.logger.debug(new_rank);
                 this.logger.debug(old_rank);
                 this.logger.debug(delta_votes);
-                const change_voters = delegate.transactions.some(o => o.type == 1 || o.type == 2);
+                const change_voters = delegate.transactions.some(o => o.type === 1 || o.type === 2);
 
                 if (delta_rank < 0) message += `Rank: ${old_rank} --(+${Math.abs(delta_rank)})--> ${new_rank}\n`
                 else if (delta_rank > 0) message += `Rank: ${old_rank} --(-${Math.abs(delta_rank)})--> ${new_rank}\n`
@@ -329,7 +329,7 @@ export class alerts_handler{
                     let voter_list = await this.db.get_all_voters_outForging();
                     for (let voter of voter_list){
                         let wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                        if (wallet.hasVoted() && wallet.getAttribute("vote") == delegate.publicKey){
+                        if (wallet.hasVoted() && wallet.getAttribute("vote") === delegate.username){
                             this.bot.sendMessage(voter.chat_id, `Delegate ${delegate.username} (voted by ${voter.address}) is out from the forging delegates!\nNew Rank: ${new_rank}.`);
                         }
                     }
@@ -344,7 +344,7 @@ export class alerts_handler{
                         }
                         for (let voter of voter_list){
                             let wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                            if (wallet.hasVoted() && wallet.getAttribute("vote") == delegate.username){
+                            if (wallet.hasVoted() && wallet.getAttribute("vote") === delegate.username){
                                 this.bot.sendMessage(voter.chat_id, `${delegate.username} (voted by ${voter.address}) is out because he was red. \nMissed blocks: ${consecutive}`);
                             }
                         }  
@@ -356,7 +356,7 @@ export class alerts_handler{
                     let voter_list = await this.db.get_all_voters_outForging();
                     for (let voter of voter_list){
                         let wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                        if (wallet.hasVoted() && wallet.getAttribute("vote") == delegate.publicKey){
+                        if (wallet.hasVoted() && wallet.getAttribute("vote") === delegate.username){
                             this.bot.sendMessage(voter.chat_id, `Delegate ${delegate.username} (voted by ${voter.address}) is now in a forging position!\nNew Rank: ${new_rank}.`);
                         }
                     }
@@ -377,13 +377,13 @@ export class alerts_handler{
                         const amount = `${BigIntToBString(trans.amount, 8)} ${this.network.client.token}`
                         const sender_string = `<a href="${this.network.client.explorer}/wallets/${trans.sender}">${trans.sender}</a>`
                         const recipient_string = trans.recipient && trans.recipient.startsWith("Multipay (") ? trans.recipient : `<a href="${this.network.client.explorer}/wallets/${trans.recipient}">${trans.recipient}</a>`
-                        if (trans.type == 1){
+                        if (trans.type === 1){
                             message += `- ${sender_string} voted you with a weight of ${amount}\n`
-                        }else if (trans.type == 2){
+                        }else if (trans.type === 2){
                             message += `- ${sender_string} unvoted you with a weight of ${amount}\n`
-                        }else if (trans.type == 3){
+                        }else if (trans.type === 3){
                             message += `- ${sender_string} sent ${amount} to ${recipient_string}\n`
-                        }else if (trans.type == 4){
+                        }else if (trans.type === 4){
                             message += `- ${recipient_string} received ${amount} from ${sender_string}\n`
                         }
                         message += `<a href="${this.network.client.explorer}/transaction/${trans.id}">View on explorer</a>\n`
@@ -414,11 +414,11 @@ export class alerts_handler{
                             const amount = `${BigIntToBString(trans.amount, 8)} ${this.network.client.token}`
                             const sender_string = `<a href="${this.network.client.explorer}/wallets/${trans.sender}">${trans.sender}</a>`
                             if (dele_old_rank < old_rank && dele_new_rank > new_rank){
-                                if (trans.type == 2){
+                                if (trans.type === 2){
                                     new_message += `- ${sender_string} unvoted ${dele_username} with a weight of ${amount}\n`
                                     new_message += `<a href="${this.network.client.explorer}/transaction/${trans.id}">View on explorer</a>\n`
                                     n_iterations += 1;
-                                }else if (trans.type == 3){
+                                }else if (trans.type === 3){
                                     let recipient_string = trans.recipient && trans.recipient.startsWith("Multipay (") ? trans.recipient : `<a href="${this.network.client.explorer}/wallets/${trans.recipient}">${trans.recipient}</a>`
                                     new_message += `- ${sender_string} that is voting for ${dele_username} sent ${amount} to ${recipient_string}\n`
                                     new_message += `<a href="${this.network.client.explorer}/transaction/${trans.id}">View on explorer</a>\n`
@@ -427,11 +427,11 @@ export class alerts_handler{
                                 
                             }
                             else if (dele_old_rank > old_rank && dele_new_rank < new_rank){
-                                if (trans.type == 1){
+                                if (trans.type === 1){
                                     new_message += `- ${sender_string} voted ${dele_username} with a weight of ${amount}\n`
                                     new_message += `<a href="${this.network.client.explorer}/transaction/${trans.id}">View on explorer</a>\n`
                                     n_iterations += 1;
-                                }else if (trans.type == 4){
+                                }else if (trans.type === 4){
                                     let recipient_string = trans.recipient && trans.recipient.startsWith("Multipay (") ? trans.recipient : `<a href="${this.network.client.explorer}/wallets/${trans.recipient}">${trans.recipient}</a>`
                                     new_message += `- ${recipient_string} that is voting for ${dele_username} received ${amount} from ${sender_string}\n`
                                     new_message += `<a href="${this.network.client.explorer}/transaction/${trans.id}">View on explorer</a>\n`
@@ -444,9 +444,9 @@ export class alerts_handler{
 
                         this.logger.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 
-                        if (new_message != "" && (message + new_message).length >= 4000){
+                        if (new_message !== "" && (message + new_message).length >= 4000){
                             for (let chat of chat_id_list){
-                                if (((chat.Votes !== "OFF" && (delta_votes.isLessThan(new Utils.BigNumber(Number(chat.Votes)).times(-100000000)) || delta_votes.isGreaterThan(new Utils.BigNumber(Number(chat.Votes)).times(100000000)))) || (chat.Position === "ON" &&  Math.abs(delta_rank) > 0) || (change_voters && chat.Voters == "ON")))
+                                if (((chat.Votes !== "OFF" && (delta_votes.isLessThan(new Utils.BigNumber(Number(chat.Votes)).times(-100000000)) || delta_votes.isGreaterThan(new Utils.BigNumber(Number(chat.Votes)).times(100000000)))) || (chat.Position === "ON" &&  Math.abs(delta_rank) > 0) || (change_voters && chat.Voters === "ON")))
                                     this.bot.sendMessage(chat.chat_id, message, Extra.webPreview(false).HTML());
             
                             }
@@ -463,9 +463,9 @@ export class alerts_handler{
                 if (!hasReasons){
                     message += "- Probably block rewards\n"
                 }
-                if (message != ""){
+                if (message !== ""){
                     for (let chat of chat_id_list){
-                        if (((chat.Votes !== "OFF" && (delta_votes.isLessThan(new Utils.BigNumber(Number(chat.Votes)).times(-100000000)) || delta_votes.isGreaterThan(new Utils.BigNumber(Number(chat.Votes)).times(100000000)))) || (chat.Position === "ON" &&  Math.abs(delta_rank) > 0) || (change_voters && chat.Voters == "ON")))
+                        if (((chat.Votes !== "OFF" && (delta_votes.isLessThan(new Utils.BigNumber(Number(chat.Votes)).times(-100000000)) || delta_votes.isGreaterThan(new Utils.BigNumber(Number(chat.Votes)).times(100000000)))) || (chat.Position === "ON" &&  Math.abs(delta_rank) > 0) || (change_voters && chat.Voters === "ON")))
                             this.bot.sendMessage(chat.chat_id, message, Extra.webPreview(false).HTML());
     
                     }
@@ -480,7 +480,7 @@ export class alerts_handler{
     }
 
     private get_block_transactions = async (id:number) => {
-        const temp = this.transactions_queue.filter((o) => o.blockHeight == id);
+        const temp = this.transactions_queue.filter((o) => o.blockHeight === id);
         this.transactions_queue = this.transactions_queue.filter((o) => o.blockHeight > id);
         return temp;
     }

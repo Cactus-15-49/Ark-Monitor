@@ -39,7 +39,7 @@ export class settings {
     }
 
     public delegate_add_from_voter = (ctx: UContext)=>  {
-        if (ctx.user.delegates.length == 0){
+        if (ctx.user.delegates.length === 0){
             ctx.reply(`Insert your ${this.get_delegate_name()} username here`,  {reply_markup: Markup.keyboard([["/Back"]])});
             this.db.enter_menu(ctx.chat_id, ctx.user.states, "add_delegate");
         }
@@ -48,7 +48,7 @@ export class settings {
     }
     
     public delegate_main = (ctx: UContext)=>  {
-        const choice = ctx.user.delegates.find(delegate => delegate.username == ctx.text || delegate.address == ctx.text);
+        const choice = ctx.user.delegates.find(delegate => delegate.username === ctx.text || delegate.address === ctx.text);
         if (choice !== undefined){
             this.db.enter_menu(ctx.chat_id, ctx.user.states, choice.address);
             ctx.reply(`You are modyfing the ${this.get_delegate_name()} ${choice.username}.\nChoose what you want to do.`,  {reply_markup: Markup.keyboard([["delete"],["/Back"]])})
@@ -81,13 +81,13 @@ export class settings {
             ctx.reply("You can't have 0 voters and delegates. Add a delegate or voter to delete this.")
             return;
         }
-        const delegate = ctx.user.delegates.find((wallet) => wallet.address == ctx.user.states[2])!;
+        const delegate = ctx.user.delegates.find((wallet) => wallet.address === ctx.user.states[2])!;
         ctx.reply(`Are you sure you want to delete ${delegate.username} (${delegate.address}).`,  {reply_markup: Markup.keyboard([["yes"], ["no"]])});
         this.db.enter_menu(ctx.chat_id, ctx.user.states, "delete")
     }
     
     public confirm_delete_username = (ctx: UContext)=>  {
-        const delegate = ctx.user.delegates.find((delegate) => delegate.address == ctx.user.states[2])!;
+        const delegate = ctx.user.delegates.find((delegate) => delegate.address === ctx.user.states[2])!;
         if (ctx.text === "yes"){
             this.db.delete_delegate(ctx.chat_id, delegate.username)
             ctx.reply(`${this.get_delegate_name()} ${delegate.username} deleted.`);
@@ -97,7 +97,7 @@ export class settings {
                 return;
             }
             const old_delegates = ctx.user.delegates
-            ctx.user.delegates = old_delegates.filter(delegate => (delegate.address != ctx.user.states[3]));
+            ctx.user.delegates = old_delegates.filter(delegate => (delegate.address !== ctx.user.states[3]));
             this.menu_utils.handle_back(ctx, 3, "", this.menu.settings);
         }
     }
@@ -112,7 +112,7 @@ export class settings {
     }
 
     public voter_add_from_delegate = (ctx: UContext) =>  {
-        if (ctx.user.voters.length == 0){
+        if (ctx.user.voters.length === 0){
             ctx.reply(`Insert your wallet address here`,  {reply_markup: Markup.keyboard([["/Back"]])})
             this.db.enter_menu(ctx.chat_id, ctx.user.states, "add_voter");
         }
@@ -121,7 +121,7 @@ export class settings {
     }
     
     public voter_main = (ctx: UContext)=>  {
-        const choice = ctx.user.voters.find((wallet) => wallet.name == ctx.text || wallet.address === ctx.text);
+        const choice = ctx.user.voters.find((wallet) => wallet.name === ctx.text || wallet.address === ctx.text);
         if (choice !== undefined){
             this.db.enter_menu(ctx.chat_id, ctx.user.states, choice.address)
             let row: string[] = [];
@@ -179,7 +179,7 @@ export class settings {
             ctx.reply(`The wallet ${ctx.user.states[3]} is now renamed ${name}`)
             const old_voters = ctx.user.voters;
             ctx.user.voters = old_voters.map(voter => {
-                if (voter.address == ctx.user.states[3]) voter.name = name;
+                if (voter.address === ctx.user.states[3]) voter.name = name;
                 return voter;
             })
             this.menu_utils.handle_back(ctx, 2, "", this.menu.settings);
@@ -192,7 +192,7 @@ export class settings {
             ctx.reply("You can't have 0 voters and delegates. Add a delegate or voter to delete this.")
             return;
         }
-        const wallet = ctx.user.voters.find((wallet) => wallet.address == ctx.user.states[2])!;
+        const wallet = ctx.user.voters.find((wallet) => wallet.address === ctx.user.states[2])!;
         let message: string = "Are you sure you want to delete ";
         if (wallet.name !== undefined)
             message += `${wallet.name} (${wallet.address}).`
@@ -208,7 +208,7 @@ export class settings {
     }
     
     public confirm_delete_address = (ctx: UContext)=>  {
-        const voter = ctx.user.voters.find((wallet) => wallet.address == ctx.user.states[2])!;
+        const voter = ctx.user.voters.find((wallet) => wallet.address === ctx.user.states[2])!;
         if (ctx.text === "yes"){
             this.db.delete_voter(ctx.chat_id, ctx.user.states[2])
             ctx.reply(`Wallet ${voter.name || voter.address} deleted.`);
@@ -218,7 +218,7 @@ export class settings {
                 return
             }
             const old_voters = ctx.user.voters
-            ctx.user.voters = old_voters.filter(voter => (voter.address != ctx.user.states[2]));
+            ctx.user.voters = old_voters.filter(voter => (voter.address !== ctx.user.states[2]));
             this.menu_utils.handle_back(ctx, 2, "", this.menu.settings);
         }
     }
@@ -236,7 +236,7 @@ export class settings {
             ctx.reply(`The wallet ${ctx.user.states[2]} is now renamed ${name}`);
             const old_voters = ctx.user.voters;
             ctx.user.voters = old_voters.map(voter => {
-                if (voter.address == ctx.user.states[2]) voter.name = name;
+                if (voter.address === ctx.user.states[2]) voter.name = name;
                 return voter;
             })
             this.menu_utils.handle_back(ctx, 1, ctx.user.states[2] , this.voter_main)
