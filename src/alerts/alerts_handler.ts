@@ -1,8 +1,9 @@
-import { Container, Contracts, Enums, Utils, Providers} from "@solar-network/core-kernel";
-import { Managers } from "@solar-network/crypto";
-import { Repositories } from "@solar-network/core-database";
+import { Container, Contracts, Enums, Providers, Utils as AppUtils} from "@solar-network/kernel";
+import { Managers, Utils, Interfaces } from "@solar-network/crypto";
+import { Repositories } from "@solar-network/database";
 import { Telegram, Extra } from "telegraf";
 import { BigIntToBString } from "../utils/utils";
+import { simplified_transaction, TransactionsTypes } from "../interfaces";
 
 @Container.injectable()
 export class alerts_handler{
@@ -87,7 +88,7 @@ export class alerts_handler{
                     }
                     for (let voter of voter_list){
                         let wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                        if (wallet.hasVoted() && wallet.getAttribute("vote") === username){
+                        if (wallet.hasVoted() && wallet.getVoteBalance(username) !== undefined){
                             this.bot.sendMessage(voter.chat_id, `${username} (voted by ${voter.address}) is green again. \nMissed blocks: ${consecutive}`);
                         }
                     }  
@@ -105,7 +106,7 @@ export class alerts_handler{
                 const wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(sender_p_key);
                 let addresses: string[] = [wallet.getAddress()];
                 if (transaction.typeGroup === 1 && transaction.type === 6){
-                    transaction.asset.payments.forEach(element => {
+                    transaction.asset.transfers.forEach(element => {
                         const address = element.recipientId;
                         if (!addresses.includes(address)) addresses.push(address);
                     });
@@ -146,7 +147,7 @@ export class alerts_handler{
                         }
                         for (let voter of voter_list){
                             const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                            if (wallet.hasVoted() && wallet.getAttribute("vote") === username){
+                            if (wallet.hasVoted() && wallet.getVoteBalance(username) !== undefined){
                                 this.bot.sendMessage(voter.chat_id, `${username} (voted by ${voter.address}) is Orange`);
                             }
                         }
@@ -156,7 +157,7 @@ export class alerts_handler{
                         }
                         for (let voter of voter_list){
                             let wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                            if (wallet.hasVoted() && wallet.getAttribute("vote") === username){
+                            if (wallet.hasVoted() && wallet.getVoteBalance(username) !== undefined){
                                 this.bot.sendMessage(voter.chat_id, `${username} (voted by ${voter.address}) is Red\nMissed blocks: ${consecutive}`);
                             }
                         }
@@ -167,7 +168,7 @@ export class alerts_handler{
                     }else if (consecutive % 212 === 0){
                         for (let voter of voter_list){
                             let wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                            if (wallet.hasVoted() && wallet.getAttribute("vote") === username){
+                            if (wallet.hasVoted() && wallet.getVoteBalance(username) !== undefined){
                                 this.bot.sendMessage(voter.chat_id, `${username} (voted by ${voter.address}) is Red\nMissed blocks: ${consecutive}`);
                             }
                         }
@@ -194,107 +195,121 @@ export class alerts_handler{
         }).filter((element) => {return (!(element.votediff.isZero()) || element.rankdiff !== 0)});
         this.logger.debug("------------------------------------");
         if (delegates_difference.length > 0){
-            const transactions = await this.get_block_transactions(block.height);
-            const filtered_transactions = transactions.map((trans) => {
+            const transactions = this.get_block_transactions(block.height);
+            console.log(`transactions : ${JSON.stringify(transactions)}`);
+            const normalized_transactions = transactions.flatMap((trans) => {
+
+                const sender = this.wallets.findByPublicKey(trans.senderPublicKey);
+
+                const transaction: simplified_transaction = {
+                    type: TransactionsTypes.vote,
+                    id: trans.id!,
+                    sender: sender.getAddress(),
+                    recipient: undefined,
+                    amount: trans.amount,
+                    delegates: []
+                };
+                
+                const senderVote = sender.getVoteDistribution();
+                console.log(`senderVote : ${JSON.stringify(senderVote)}`);
                 if (trans.typeGroup === 1 && trans.type === 3){
-                    return trans;
+                    transaction.amount = sender.getBalance();
+                    const votes = trans.asset!.votes as string[];
+                    for (const vote of votes) {
+                        const delegate = vote.substring(1).length > 21 ? this.wallets.findByPublicKey(vote.substring(1)) : this.wallets.findByAddress(vote.substring(1));
+                        transaction.delegates.push({delegate: delegate.getAttribute("delegate.username"), amount: vote[0] === "+" ? transaction.amount : -transaction.amount})
+                    }
+                    if (transaction.delegates[0].delegate === transaction.delegates[1].delegate) {
+                        transaction.delegates = [];
+                    }
+                    return transaction;
+                }else if (trans.typeGroup === 1 && trans.type === 6){
+                    const multi_transactions: simplified_transaction[] = [];
+                    transaction.type = TransactionsTypes.transfer;
+
+                    
+                    for (const transfer of trans.asset!.transfers!) {
+                        transaction.delegates = [];
+                        transaction.amount = transfer.amount;
+                        transaction.recipient = transfer.recipientId;
+                        for (const delegate of Object.keys(senderVote)) {
+                            transaction.delegates.push({delegate, amount: transaction.amount.times(-senderVote[delegate].percent*100).dividedBy(10000)})
+                        }
+                        const recipient = this.wallets.findByAddress(transaction.recipient);
+                        const recipientVote = recipient.getVoteDistribution();
+                        for (const delegate of Object.keys(recipientVote)) {
+                            if (transaction.delegates.find(del => del.delegate === delegate)) {
+                                transaction.delegates = transaction.delegates.map(del => {
+                                    if (del.delegate === delegate) return {delegate: del.delegate, amount: del.amount.plus(transaction.amount.times(recipientVote[delegate].percent*100).dividedBy(10000))};
+                                    return del;
+                                })
+                            } else {
+                                transaction.delegates.push({delegate, amount: transaction.amount.times(recipientVote[delegate].percent*100).dividedBy(10000)}); 
+                            }
+                        }
+                        transaction.delegates = transaction.delegates.filter(del => !del.amount.isZero());
+                        if (transaction.delegates.length) {
+                            multi_transactions.push({...transaction});
+                        }
+                    }
+                    return multi_transactions;
+                }else if (trans.typeGroup === 1 && trans.type === 0){
+                    transaction.type = TransactionsTypes.transfer;
+
+                    transaction.delegates = [];
+                    transaction.recipient = trans.recipientId;
+                    for (const delegate of Object.keys(senderVote)) {
+                        transaction.delegates.push({delegate, amount: transaction.amount.times(-senderVote[delegate].percent*100).dividedBy(10000)})
+                    }
+                    const recipient = this.wallets.findByAddress(transaction.recipient!);
+                    const recipientVote = recipient.getVoteDistribution();
+                    for (const delegate of Object.keys(recipientVote)) {
+                        if (transaction.delegates.find(del => del.delegate === delegate)) {
+                            transaction.delegates = transaction.delegates.map(del => {
+                                if (del.delegate === delegate) return {delegate: del.delegate, amount: del.amount.plus(transaction.amount.times(recipientVote[delegate].percent*100).dividedBy(10000))};
+                                return del;
+                            })
+                        } else {
+                            transaction.delegates.push({delegate, amount: transaction.amount.times(recipientVote[delegate].percent*100).dividedBy(10000)}); 
+                        }
+                    }
+                    transaction.delegates = transaction.delegates.filter(del => !del.amount.isZero());
+                    if (transaction.delegates.length) {
+                        return transaction;
+                    }
+
+                    return undefined;
+                }else if (trans.typeGroup === 2 && trans.type === 0){
+                    transaction.type = TransactionsTypes.burn;
+
+                    transaction.delegates = [];
+                    for (const delegate of Object.keys(senderVote)) {
+                        transaction.delegates.push({delegate, amount: transaction.amount.times(-senderVote[delegate].percent*100).dividedBy(10000)})
+                    }
+                    if (transaction.delegates.length) {
+                        return transaction;
+                    }
+
+                    return undefined;
+                }else if (trans.typeGroup === 2 && trans.type === 2) {
+                    transaction.amount = sender.getBalance();
+                    const newVotes = trans.asset!.votes!;
+                    const oldVotes = sender.getAllStateHistory().votes.at(-2);
+                    const allDelegates = Object.keys(oldVotes).concat(Object.keys(newVotes).filter((item) => Object.keys(oldVotes).indexOf(item) < 0));
+                    for (const delegate of allDelegates) {
+                        const diff = transaction.amount.times((newVotes[delegate] | 0)*100).minus(transaction.amount.times((oldVotes[delegate] | 0)*100)).dividedBy(10000);
+                        transaction.delegates.push({delegate, amount: diff});
+                    }
+                    return transaction;
                 }
 
-                let valid:Boolean = false;
-                const sender = this.wallets.findByPublicKey(trans.senderPublicKey);
-                if (sender.hasVoted()){
-                    valid = true;
-                    const delegate: Contracts.State.Wallet = this.wallets.findByUsername(sender.getAttribute("vote"));
-                    trans.sendervote = delegate.getAttribute("delegate.username");
-                }
-                if (trans.typeGroup === 1 && trans.type === 6){
-                    let recipients = trans.asset.payments;
-                    trans.asset.payments = recipients.map((o) => {
-                        const single_recipient = this.wallets.findByAddress(o.recipientId);
-                        if (single_recipient.hasVoted()){
-                            valid = true;
-                            const delegate: Contracts.State.Wallet = this.wallets.findByUsername(single_recipient.getAttribute("vote"));
-                            o.vote = delegate.getAttribute("delegate.username");
-                        }
-                        return o;
-                    })
-                }
-                else {
-                    let recipient = this.wallets.findByAddress(trans.recipientId);
-                
-                
-                    if (recipient.hasVoted() && recipient.getAddress() !== sender.getAddress()){
-                        valid = true;
-                        const delegate: Contracts.State.Wallet = this.wallets.findByUsername(recipient.getAttribute("vote"));
-                        trans.recipientvote = delegate.getAttribute("delegate.username");
-                    }
-                }
-                
-                if (valid){
-                    return trans;
-                }
-            })
+                return undefined;
+            }).filter(o => o !== undefined);
+
+            console.log(`Normalized : ${JSON.stringify(normalized_transactions)}`);
+
             const result = delegates_difference.map((wallet) => {
-                wallet.transactions = filtered_transactions.filter(o => {
-                    if (o === undefined){
-                        return false;
-                    }
-                    else if (o.typeGroup === 1 && o.type === 3){
-                        return (
-                            (o.asset.votes.includes("+" + wallet.publicKey) !== o.asset.votes.includes("-" + wallet.publicKey)) ||
-                            (o.asset.votes.includes("+" + wallet.username) !== o.asset.votes.includes("-" + wallet.username)) ||
-                            (o.asset.votes.includes("+" + wallet.publicKey) !== o.asset.votes.includes("-" + wallet.username)) ||
-                            (o.asset.votes.includes("+" + wallet.username) !== o.asset.votes.includes("-" + wallet.publicKey))
-                            );
-                    }else if (o.typeGroup === 1 && o.type === 6){
-                        return (wallet.username === o.sendervote) || (o.asset.payments.filter((o) => { return (o.vote === wallet.username && o.vote !== o.sendervote)}).length > 0);
-                    }else if (o.typeGroup === 1 && o.type === 0){
-                        return ((wallet.username === o.sendervote ||  wallet.username === o.recipientvote) && o.sendervote !== o.recipientvote);
-                    }
-                    return false;
-                }).flatMap(transaction => {
-                    let type;
-                    let sender;
-                    let recipient: string | undefined = undefined;
-                    let amount = Utils.BigNumber.ZERO;
-                    let id = transaction.id;
-                    if (transaction.typeGroup === 1 && transaction.type === 3){
-                        const sender_wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(transaction.senderPublicKey);
-                        sender = sender_wallet.getAddress();
-                        amount = sender_wallet.getBalance();
-                        if (transaction.asset.votes.includes("+" + wallet.publicKey) || transaction.asset.votes.includes("+" + wallet.username)){
-                            type = 1;
-                        }else{
-                            type = 2;
-                        }
-                    }else if (transaction.typeGroup === 1 && transaction.type === 6){
-                        let multi_transactions: any[] = [];
-                        const d_wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(transaction.senderPublicKey);
-                        sender = d_wallet.getAddress();
-                        if (wallet.username === transaction.sendervote){
-                            type = 3
-                            for (let recipient of transaction.asset.payments){
-                                if (recipient.vote !== transaction.sendervote) amount = amount.plus(recipient.amount);
-                            }
-                            if (amount === Utils.BigNumber.ZERO) return [];
-                            recipient = `Multipay (${transaction.asset.payments.length})`
-                        }else {
-                            type = 4
-                            for (let recipient of transaction.asset.payments){
-                                if (recipient.vote === wallet.username) multi_transactions.push({id, type, sender, recipient: recipient.recipientId, amount: recipient.amount});
-                            }
-                            return multi_transactions;
-                        }
-                    }else if (transaction.typeGroup === 1 && transaction.type === 0){
-                        recipient = transaction.recipientId;
-                        const d_wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(transaction.senderPublicKey);
-                        sender = d_wallet.getAddress();
-                        amount = transaction.amount;
-                        if (wallet.username === transaction.sendervote) type = 3;
-                        else type = 4;
-                    }
-                    return {id, type, sender, recipient, amount};
-                });
+                wallet.transactions = normalized_transactions.filter(o => o!.delegates.find(delegate => wallet.username === delegate.delegate));
                 return wallet;
             })
 
@@ -317,7 +332,7 @@ export class alerts_handler{
                 this.logger.debug(new_rank);
                 this.logger.debug(old_rank);
                 this.logger.debug(delta_votes);
-                const change_voters = delegate.transactions.some(o => o.type === 1 || o.type === 2);
+                const change_voters = delegate.transactions.some(o => o.type === TransactionsTypes.vote );
 
                 if (delta_rank < 0) message += `Rank: ${old_rank} --(+${Math.abs(delta_rank)})--> ${new_rank}\n`
                 else if (delta_rank > 0) message += `Rank: ${old_rank} --(-${Math.abs(delta_rank)})--> ${new_rank}\n`
@@ -334,7 +349,7 @@ export class alerts_handler{
                     let voter_list = await this.db.get_all_voters_outForging();
                     for (let voter of voter_list){
                         let wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                        if (wallet.hasVoted() && wallet.getAttribute("vote") === delegate.username){
+                        if (wallet.hasVoted() && wallet.getVoteBalance(delegate.username) !== undefined){
                             this.bot.sendMessage(voter.chat_id, `Delegate ${delegate.username} (voted by ${voter.address}) is out from the forging delegates!\nNew Rank: ${new_rank}.`);
                         }
                     }
@@ -349,7 +364,7 @@ export class alerts_handler{
                         }
                         for (let voter of voter_list){
                             let wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                            if (wallet.hasVoted() && wallet.getAttribute("vote") === delegate.username){
+                            if (wallet.hasVoted() && wallet.getVoteBalance(delegate.username) !== undefined){
                                 this.bot.sendMessage(voter.chat_id, `${delegate.username} (voted by ${voter.address}) is out because he was red. \nMissed blocks: ${consecutive}`);
                             }
                         }  
@@ -361,7 +376,7 @@ export class alerts_handler{
                     let voter_list = await this.db.get_all_voters_outForging();
                     for (let voter of voter_list){
                         let wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                        if (wallet.hasVoted() && wallet.getAttribute("vote") === delegate.username){
+                        if (wallet.hasVoted() && wallet.getVoteBalance(delegate.username) !== undefined){
                             this.bot.sendMessage(voter.chat_id, `Delegate ${delegate.username} (voted by ${voter.address}) is now in a forging position!\nNew Rank: ${new_rank}.`);
                         }
                     }
@@ -373,23 +388,29 @@ export class alerts_handler{
                 let hasReasons = false;
                 if (delegate.transactions.length){
                     hasReasons = true;
+                    console.log(`aaaaaaaaaaaaaaaaaaaaa: ${JSON.stringify(delegate.transactions)}`);
                     const sortedTransaction = delegate.transactions.sort((trans1, trans2) => {
+                        console.log(`trans1: ${JSON.stringify(trans1)}`)
+                        console.log(`trans2: ${JSON.stringify(trans2)}`)
                         if (trans1.amount.isGreaterThan(trans2.amount)) return -1;
                         if (trans1.amount.isLessThan(trans2.amount)) return 1;
                         return 0;
                     });
                     for (let trans of sortedTransaction.slice(0, 5)){
-                        const amount = `${BigIntToBString(trans.amount, 8)} ${this.network.client.token}`
+                        const amount = trans.delegates.find(del => del.delegate === delegate.username).amount;
+                        const amount_string = `${BigIntToBString(amount.isNegative() ? amount.times(-1) : amount, 8)} ${this.network.client.token}`
                         const sender_string = `<a href="${this.network.client.explorer}/wallets/${trans.sender}">${trans.sender}</a>`
-                        const recipient_string = trans.recipient && trans.recipient.startsWith("Multipay (") ? trans.recipient : `<a href="${this.network.client.explorer}/wallets/${trans.recipient}">${trans.recipient}</a>`
-                        if (trans.type === 1){
-                            message += `- ${sender_string} voted you with a weight of ${amount}\n`
-                        }else if (trans.type === 2){
-                            message += `- ${sender_string} unvoted you with a weight of ${amount}\n`
-                        }else if (trans.type === 3){
-                            message += `- ${sender_string} sent ${amount} to ${recipient_string}\n`
-                        }else if (trans.type === 4){
-                            message += `- ${recipient_string} received ${amount} from ${sender_string}\n`
+                        const recipient_string = trans.recipient ? `<a href="${this.network.client.explorer}/wallets/${trans.recipient}">${trans.recipient}</a>` : "";
+                        if (trans.type === TransactionsTypes.vote && amount.isGreaterThan(0)){
+                            message += `- ${sender_string} voted you with a weight of ${amount_string}\n`
+                        }else if (trans.type === TransactionsTypes.vote && amount.isLessThan(0)){
+                            message += `- ${sender_string} unvoted you with a weight of ${amount_string}\n`
+                        }else if (trans.type === TransactionsTypes.transfer && amount.isLessThan(0)){
+                            message += `- ${sender_string} sent ${amount_string} to ${recipient_string}\n`
+                        }else if (trans.type === TransactionsTypes.transfer && amount.isGreaterThan(0)){
+                            message += `- ${recipient_string} received ${amount_string} from ${sender_string}\n`
+                        }else if (trans.type === TransactionsTypes.burn) {
+                            message += `- ${sender_string} burned ${amount_string}\n`
                         }
                         message += `<a href="${this.network.client.explorer}/transaction/${trans.id}">View on explorer</a>\n`
                     }
@@ -407,6 +428,7 @@ export class alerts_handler{
                         else if (dele_old_rank < old_rank && dele_new_rank > new_rank) new_message += `${dele_username} dropped below you:\nReasons:\n`;
                         else continue;
                         hasReasons = true;
+                        console.log(`bbbbbbbbbbbbbbbbbbbbbb: ${JSON.stringify(other_delegate.transactions)}`);
                         const other_sortedTransaction = other_delegate.transactions.sort((trans1, trans2) => {
                             if (trans1.amount.isGreaterThan(trans2.amount)) return -1;
                             if (trans1.amount.isLessThan(trans2.amount)) return 1;
@@ -416,33 +438,37 @@ export class alerts_handler{
 
 
                         for (let trans of other_sortedTransaction){
-                            const amount = `${BigIntToBString(trans.amount, 8)} ${this.network.client.token}`
+                            const amount = trans.delegates.find(del => del.delegate === dele_username).amount;
+                            const amount_string = `${BigIntToBString(amount.isNegative() ? amount.times(-1) : amount, 8)} ${this.network.client.token}`
                             const sender_string = `<a href="${this.network.client.explorer}/wallets/${trans.sender}">${trans.sender}</a>`
                             if (dele_old_rank < old_rank && dele_new_rank > new_rank){
-                                if (trans.type === 2){
-                                    new_message += `- ${sender_string} unvoted ${dele_username} with a weight of ${amount}\n`
+                                if (trans.type === TransactionsTypes.vote && amount.isLessThan(0)){
+                                    new_message += `- ${sender_string} unvoted ${dele_username} with a weight of ${amount_string}\n`
                                     new_message += `<a href="${this.network.client.explorer}/transaction/${trans.id}">View on explorer</a>\n`
                                     n_iterations += 1;
-                                }else if (trans.type === 3){
-                                    let recipient_string = trans.recipient && trans.recipient.startsWith("Multipay (") ? trans.recipient : `<a href="${this.network.client.explorer}/wallets/${trans.recipient}">${trans.recipient}</a>`
-                                    new_message += `- ${sender_string} that is voting for ${dele_username} sent ${amount} to ${recipient_string}\n`
+                                }else if (trans.type === TransactionsTypes.transfer && amount.isLessThan(0)){
+                                    const recipient_string = trans.recipient? `<a href="${this.network.client.explorer}/wallets/${trans.recipient}">${trans.recipient}</a>` : "";
+                                    new_message += `- ${sender_string} that is voting for ${dele_username} sent ${amount_string} to ${recipient_string}\n`
+                                    new_message += `<a href="${this.network.client.explorer}/transaction/${trans.id}">View on explorer</a>\n`
+                                    n_iterations += 1;
+                                }else if (trans.type === TransactionsTypes.burn) {
+                                    new_message += `- ${sender_string} that is voting for ${dele_username} burned ${amount_string}\n`
                                     new_message += `<a href="${this.network.client.explorer}/transaction/${trans.id}">View on explorer</a>\n`
                                     n_iterations += 1;
                                 }                            
                                 
                             }
                             else if (dele_old_rank > old_rank && dele_new_rank < new_rank){
-                                if (trans.type === 1){
-                                    new_message += `- ${sender_string} voted ${dele_username} with a weight of ${amount}\n`
+                                if (trans.type === TransactionsTypes.vote && amount.isGreaterThan(0)){
+                                    new_message += `- ${sender_string} voted ${dele_username} with a weight of ${amount_string}\n`
                                     new_message += `<a href="${this.network.client.explorer}/transaction/${trans.id}">View on explorer</a>\n`
                                     n_iterations += 1;
-                                }else if (trans.type === 4){
-                                    let recipient_string = trans.recipient && trans.recipient.startsWith("Multipay (") ? trans.recipient : `<a href="${this.network.client.explorer}/wallets/${trans.recipient}">${trans.recipient}</a>`
-                                    new_message += `- ${recipient_string} that is voting for ${dele_username} received ${amount} from ${sender_string}\n`
+                                }else if (trans.type === TransactionsTypes.transfer && amount.isGreaterThan(0)){
+                                    const recipient_string = trans.recipient? `<a href="${this.network.client.explorer}/wallets/${trans.recipient}">${trans.recipient}</a>` : "";
+                                    new_message += `- ${recipient_string} that is voting for ${dele_username} received ${amount_string} from ${sender_string}\n`
                                     new_message += `<a href="${this.network.client.explorer}/transaction/${trans.id}">View on explorer</a>\n`
                                     n_iterations += 1;
-                                }
-                                
+                                }                                
                             }
                             if (n_iterations >= 3) break;
                         }
@@ -484,7 +510,7 @@ export class alerts_handler{
         }
     }
 
-    private get_block_transactions = async (id:number) => {
+    private get_block_transactions = (id : number): Array<Interfaces.ITransactionData> => {
         const temp = this.transactions_queue.filter((o) => o.blockHeight === id);
         this.transactions_queue = this.transactions_queue.filter((o) => o.blockHeight > id);
         return temp;
@@ -493,7 +519,7 @@ export class alerts_handler{
     private init = async () => {
         this.logger.info("Missed block calculation started")
         const current_height = this.blockchain.getLastHeight();
-        const round = Utils.roundCalculator.calculateRound(current_height).round;
+        const round = AppUtils.roundCalculator.calculateRound(current_height).round;
 
         const milestone = Managers.configManager.getMilestone(current_height);
         const number_delegates = milestone.activeDelegates;
@@ -540,8 +566,8 @@ export class alerts_handler{
             const diff = voteBalanceB.comparedTo(voteBalanceA);
 
             if (diff === 0) {
-                Utils.assert.defined<string>(a.getPublicKey());
-                Utils.assert.defined<string>(b.getPublicKey());
+                AppUtils.assert.defined<string>(a.getPublicKey());
+                AppUtils.assert.defined<string>(b.getPublicKey());
 
                 if (a.getPublicKey() === b.getPublicKey()) {
                     const username = a.getAttribute("delegate.username");

@@ -1,5 +1,5 @@
-import { Container, Contracts, Utils, Providers } from "@solar-network/core-kernel";
-import { Managers, Interfaces } from "@solar-network/crypto";
+import { Container, Contracts, Providers, Utils as AppUtils } from "@solar-network/kernel";
+import { Managers, Interfaces, Utils } from "@solar-network/crypto";
 import { Markup } from "telegraf";
 import { BigIntToString, BigIntToBString } from "../../utils/utils";
 import { coingecko_request } from "../../utils/coingecko";
@@ -14,6 +14,9 @@ export class menu {
 
     @Container.inject(Container.Identifiers.TransactionHistoryService)
     private readonly transactionHistoryService!: Contracts.Shared.TransactionHistoryService;
+
+    @Container.inject(Container.Identifiers.BlockHistoryService)
+    private readonly blockHistoryService!: Contracts.Shared.BlockHistoryService;
 
     @Container.inject(Symbol.for("display_transactions"))
     private readonly display_transactions;
@@ -70,18 +73,23 @@ export class menu {
                 answer += `??? BTC ($???)\n`;
             }
             
-            if (wallet.hasAttribute("vote")){
-                const delegate: Contracts.State.Wallet = this.wallets.findByUsername(wallet.getAttribute("vote"));
-                answer += `Vote: ${delegate.getAttribute("delegate.username")}`;
-                if (delegate.hasAttribute("delegate.resigned") && delegate.getAttribute("delegate.resigned")) {
-                    answer += " (Resigned)";
+            if (wallet.hasVoted()){
+                const votes = wallet.getVoteDistribution();
+                answer += "Vote(s):\n"
+                for (const vote in votes) {
+
+                    const delegate: Contracts.State.Wallet = this.wallets.findByUsername(vote);
+                    answer += `--${delegate.getAttribute("delegate.username")}`;
+                    if (delegate.hasAttribute("delegate.resigned") && delegate.getAttribute("delegate.resigned")) {
+                        answer += " (Resigned)";
+                    }
+                    else if (delegate.getAttribute("delegate.rank") > 51){
+                        answer += " (Not Forging)";
+                    }
+                    answer += `: ${votes[vote].percent}%\n`;
                 }
-                else if (delegate.getAttribute("delegate.rank") > 51){
-                    answer += " (Not Forging)";
-                }
-                answer += "\n";
             }
-            if (i < 5){
+            if (i < 2){
                 answer += "\n";
             }else {
                 ctx.reply(answer);
@@ -209,7 +217,7 @@ export class menu {
                     const voting_wallet = ctx.user.voters.filter((voter) =>{
                         const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
                         if (wallet.hasVoted()){
-                            return (wallet.getAttribute("vote") === username);
+                            return (wallet.getVoteBalance(username) !== undefined);
                         }
                         return false;
                     })
@@ -230,7 +238,7 @@ export class menu {
                     const voting_wallet = ctx.user.voters.filter((voter) =>{
                         const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
                         if (wallet.hasVoted()){
-                            return (wallet.getAttribute("vote") === username);
+                            return (wallet.getVoteBalance(username) !== undefined);
                         }
                         return false;
                     })
@@ -366,7 +374,7 @@ export class menu {
             const username = delegateAttribute.username;
             const produced = delegateAttribute.producedBlocks;
             const rank = delegateAttribute.rank;
-
+            console.log(JSON.stringify(delegateAttribute))
             
             const needed_delegates = this.alerts_handler.getDelegateRankList().filter(delegate => {
                 if (!(delegate.hasAttribute("delegate.rank"))) return false;
@@ -375,11 +383,11 @@ export class menu {
             })
 
 
-            if (delegateAttribute.resigned && delegateAttribute.resigned === true){
+            if (wallet.hasAttribute("delegate.resigned")){
                 message += `(Resigned) ${username}\n`;
             }else{
                 message += `(${rank}) ${username}\n`
-                message += `VOTES: ${BigIntToBString(delegateAttribute.voteBalance, 2)} ${this.network.client.token} (${Utils.delegateCalculator.calculateApproval(wallet, Utils.supplyCalculator.calculate(this.wallets.allByAddress()))}%)\n`
+                message += `VOTES: ${BigIntToBString(delegateAttribute.voteBalance, 2)} ${this.network.client.token} (${AppUtils.delegateCalculator.calculateVotePercent(wallet, AppUtils.supplyCalculator.calculate(this.wallets.allByAddress()))}%)\n`
 
                 const minor_rank = needed_delegates.find(delegate => delegate.getAttribute("delegate.rank") - rank === 1);
                 const greater_rank = needed_delegates.find(delegate => delegate.getAttribute("delegate.rank") - rank === -1);
@@ -406,9 +414,10 @@ export class menu {
             }
             message += `Produced blocks: ${BigIntToBString(produced, 0, 0)}\n`;
 
-            const last_block = delegateAttribute.lastBlock;
-            if (last_block && last_block.height > 0) {
-                const last_block_height = last_block.height
+            const last_block_id = delegateAttribute.lastBlock;
+            if (last_block_id) {
+                const last_block = await this.blockHistoryService.findOneByCriteria({ id: last_block_id });
+                const last_block_height = last_block!.height
                 const secondsToHms = (d: number) => {
                     const h = Math.floor(d / 3600);
                     const m = Math.floor(d % 3600 / 60);
@@ -423,7 +432,7 @@ export class menu {
                 }
                 
                 message += `Last block forged ${secondsToHms((current_height - last_block_height)*milestone.blocktime)} ago\n` +
-                            `└ Height: ${BigIntToBString(last_block_height, 0, 0)}\n└ Timestamp: ${Utils.formatTimestamp(delegateAttribute.lastBlock.timestamp).human}\n`
+                            `└ Height: ${BigIntToBString(last_block_height, 0, 0)}\n└ Timestamp: ${AppUtils.formatTimestamp(last_block!.timestamp).human}\n`
                 const missed_blocks = this.alerts_handler.get_missing_delegates();
                 const missed = missed_blocks.get(pkey);
                 if (missed !== undefined && rank <= milestone.activeDelegates){

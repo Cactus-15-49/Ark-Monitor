@@ -1,4 +1,4 @@
-import { Providers , Container, Contracts} from "@solar-network/core-kernel";
+import { Providers , Container, Contracts} from "@solar-network/kernel";
 import { Telegram_bot } from "./Telegram-bot";
 import { message_handler } from "./handlers/messages_handler";
 import { callback_handler } from "./handlers/callback_handler";

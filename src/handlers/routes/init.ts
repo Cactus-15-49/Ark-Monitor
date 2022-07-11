@@ -1,4 +1,4 @@
-import { Container, Contracts, Providers } from "@solar-network/core-kernel";
+import { Container, Contracts, Providers } from "@solar-network/kernel";
 import { Managers } from "@solar-network/crypto";
 import { Markup } from "telegraf";
 import { UContext } from "../../interfaces";
@@ -116,7 +116,7 @@ export class init {
         else {
             await this.db.create_delegate(ctx.chat_id, wallet.getAttribute("delegate.username"), wallet.getAddress());
             this.db.change_root(ctx.chat_id, "Dmenu")
-            ctx.reply(`${this.get_delegate_name()} saved succesfully.`)
+            ctx.reply(`${this.get_delegate_name()} saved successfully.`)
             this.menu_utils.display_menu(ctx);
         }
         

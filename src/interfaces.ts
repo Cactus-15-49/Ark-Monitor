@@ -1,4 +1,5 @@
 import { Context } from "telegraf";
+import { Utils } from "@solar-network/crypto";
 
 export interface Delegate {
     chat_id: number,
@@ -49,4 +50,19 @@ export interface UContext extends Context{
     user: User,
     text: string,
     chat_id: number
+}
+
+export enum TransactionsTypes {
+    vote,
+    transfer,
+    burn
+}
+
+export interface simplified_transaction {
+    type: TransactionsTypes,
+    id: string,
+    sender: string,
+    recipient: string | undefined,
+    amount: Utils.BigNumber,
+    delegates: Array<any>
 }

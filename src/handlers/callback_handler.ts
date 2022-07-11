@@ -1,4 +1,4 @@
-import { Container, Contracts, Providers } from "@solar-network/core-kernel";
+import { Container, Contracts, Providers } from "@solar-network/kernel";
 import { Managers, Interfaces } from "@solar-network/crypto";
 import { Extra } from "telegraf";
 import { coingecko_request } from "../utils/coingecko";

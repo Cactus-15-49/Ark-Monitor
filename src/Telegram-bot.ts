@@ -1,5 +1,5 @@
 
-import { Container, Contracts, Providers } from "@solar-network/core-kernel";
+import { Container, Contracts, Providers } from "@solar-network/kernel";
 import { Telegraf } from "telegraf";
 import { UContext } from "./interfaces";
 

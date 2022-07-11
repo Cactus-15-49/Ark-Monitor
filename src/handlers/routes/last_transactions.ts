@@ -1,4 +1,4 @@
-import { Container, Contracts } from "@solar-network/core-kernel";
+import { Container, Contracts } from "@solar-network/kernel";
 import { Interfaces } from "@solar-network/crypto";
 import { UContext } from "../../interfaces";
 
@@ -11,7 +11,7 @@ export class last_transactions {
     private readonly transactionHistoryService!: Contracts.Shared.TransactionHistoryService;
 
     @Container.inject(Symbol.for("display_transactions"))
-    private readonly dislpay_transactions;
+    private readonly  transactions_display;
 
     public display_transactions = async (ctx: UContext) =>  {
         let choice: any;
@@ -36,7 +36,7 @@ export class last_transactions {
             let message = ""
             const start = Math.max(transactions.length - 5, 0);
             for (const transaction of transactions.slice(start, start + 5).reverse()){
-                message += await this.dislpay_transactions.display(transaction, choice.address, ctx.chat_id);
+                message += await this.transactions_display.display(transaction, choice.address, ctx.chat_id);
                 message += "\n------------------------------------------------------------------\n";
             }
             let keyboard;

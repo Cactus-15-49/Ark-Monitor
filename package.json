@@ -22,16 +22,15 @@
     "dependencies": {
         "mongoose": "^5.11.12",
         "node-fetch": "^2.6.1",
-        "telegraf": "^3.38.0"
+        "telegraf": "3.38.0"
     },
     "devDependencies": {
         "@solar-network/core": "workspace:*",
-        "@solar-network/core-blockchain": "workspace:*",
-        "@solar-network/core-kernel": "workspace:*",
-        "@solar-network/core-state": "workspace:*",
-        "@solar-network/core-database": "workspace:*",
-        "@solar-network/crypto": "workspace:*",
-        "@solar-network/utils": "workspace:*"
+        "@solar-network/blockchain": "workspace:*",
+        "@solar-network/kernel": "workspace:*",
+        "@solar-network/state": "workspace:*",
+        "@solar-network/database": "workspace:*",
+        "@solar-network/crypto": "workspace:*"
     },
     "jest": {
         "preset": "../../jest-preset.json"

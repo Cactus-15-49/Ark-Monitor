@@ -1,5 +1,5 @@
-import { Container, Contracts, Utils } from "@solar-network/core-kernel";
-import { Managers, Interfaces } from "@solar-network/crypto";
+import { Container, Contracts } from "@solar-network/kernel";
+import { Managers, Interfaces, Utils } from "@solar-network/crypto";
 import { Voter } from "../interfaces";
 import { BigIntToBString } from "./utils";
 
@@ -10,34 +10,30 @@ export class display_transactions {
     @Container.tagged("state", "blockchain")
     private readonly wallets!: Contracts.State.WalletRepository;
 
-    @Container.inject(Container.Identifiers.TransactionHistoryService)
-    private readonly transactionHistoryService!: Contracts.Shared.TransactionHistoryService;
-
     @Container.inject(Symbol.for("database"))
     private readonly db;
 
     private network = Managers.configManager.get("network");
 
-    public display = async (tx: Interfaces.ITransactionData, address: string, chat_id: number) => {
+    public display = (tx: Interfaces.ITransactionData, address: string, chat_id: number) => {
         const typeGroup = tx.typeGroup;
         const type = tx.type;
         if (typeGroup === 1){
-            if (type === 0) return await this.Transfer(tx, chat_id);
+            if (type === 0) return this.LegacyTransfer(tx, chat_id);
             if (type === 1) return this.SecondSignature(tx);
             if (type === 2) return this.DelegateRegistration(tx);
-            if (type === 3) return this.Vote(tx);
-            if (type === 6) return this.MultiPayment(tx, address);
+            if (type === 3) return this.LegacyVote(tx);
+            if (type === 6) return this.Transfer(tx, address);
             if (type === 7) return this.DelegateResignation(tx);
-        }else if (typeGroup === 100){
-            if (type === 0) return this.Stake(tx, address);
-            if (type === 1) return await this.RedeemStake(tx);
-            if (type === 2) return await this.CancelStake(tx);
+        }else if (typeGroup === 2){
+            if (type === 0) return this.Burn(tx);
+            if (type === 2) return this.Vote(tx);
         }
         return "";
     } 
 
 
-    private Transfer = async (tx, chat_id) => {
+    private LegacyTransfer = async (tx, chat_id) => {
         const balance = tx.amount;
         const fee = tx.fee;
         const addresses: Voter[] = await this.db.get_voters(chat_id);
@@ -47,7 +43,7 @@ export class display_transactions {
             sender = wallet.getAttribute("delegate.username");
         else
             sender = wallet.getAddress();
-        if (addresses.some(add => add.address === wallet.getAddress()))
+        if (addresses.find(add => add.address === wallet.getAddress()))
             sender += " (you)";
         
         let recipient: string;
@@ -56,7 +52,7 @@ export class display_transactions {
             recipient = wallet.getAttribute("delegate.username");
         else
             recipient = wallet.getAddress();
-        if (addresses.some(add => add.address === wallet.getAddress()))
+        if (addresses.find(add => add.address === wallet.getAddress()))
             recipient += " (you)";
         
         let transaction = `${sender} -> ${recipient}\nAmount: ${BigIntToBString(balance, 2)} (${BigIntToBString(fee, 2)})`;
@@ -64,8 +60,8 @@ export class display_transactions {
         if (tx.timestamp !== undefined)
             transaction += `\nTimestamp: ${tx.timestamp}`
 
-        if (tx.vendorField !== undefined)
-            transaction += `\nSmartbridge: ${tx.vendorField}`;
+        if (tx.memo !== undefined)
+            transaction += `\nMemo: ${tx.memo}`;
 
         transaction += `\n<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
         return transaction;
@@ -75,6 +71,8 @@ export class display_transactions {
         let transaction = `Second signature Transaction`
         if (tx.timestamp !== undefined)
             transaction += `\nTimestamp: ${tx.timestamp}`
+        if (tx.memo !== undefined)
+            transaction += `\nMemo: ${tx.memo}`;
         transaction += `\n<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
         return transaction;
     }
@@ -83,11 +81,13 @@ export class display_transactions {
         let transaction = `New delegate registered as ${tx.asset.delegate.username}`
         if (tx.timestamp !== undefined)
             transaction += `\nTimestamp: ${tx.timestamp}`
+        if (tx.memo !== undefined)
+            transaction += `\nMemo: ${tx.memo}`;
         transaction += `\n<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
         return transaction;
     }
 
-    private Vote = (tx) => {
+    private LegacyVote = (tx) => {
         const votes = tx.asset.votes;
         let transaction = "";
         for (const vote of votes){
@@ -104,11 +104,13 @@ export class display_transactions {
         }
         if (tx.timestamp !== undefined)
             transaction += `Timestamp: ${tx.timestamp}\n`
+        if (tx.memo !== undefined)
+            transaction += `\nMemo: ${tx.memo}`;
         transaction += `<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
         return transaction;
     }
 
-    private MultiPayment = (tx, address) => {
+    private Transfer = (tx, address) => {
         let sender: string;
         const wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(tx.senderPublicKey);
         if (wallet.hasAttribute("delegate.username"))
@@ -119,14 +121,14 @@ export class display_transactions {
         let recipient = "";
         if (wallet.getAddress() === address){
             sender += " (you)"
-            for (let payment of tx.asset.payments){
+            for (let payment of tx.asset.transfers){
                 balance = balance.plus(payment.amount);
             }
 
-            recipient = `Multipayment (${tx.asset.payments.length})`
+            recipient = `Transfer (${tx.asset.transfers.length})`
         }
         else{
-            for (let payment of tx.asset.payments){
+            for (let payment of tx.asset.transfers){
                 if (payment.recipientId === address)
                     balance = balance.plus(payment.amount); 
             }
@@ -145,8 +147,8 @@ export class display_transactions {
         if (tx.timestamp !== undefined)
             transaction += `\nTimestamp: ${tx.timestamp}`
 
-        if (tx.vendorField !== undefined)
-            transaction += `\nSmartbridge: ${tx.vendorField}`;
+        if (tx.memo !== undefined)
+            transaction += `\nMemo: ${tx.memo}`;
 
         transaction += `\n<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
         return transaction;
@@ -154,52 +156,54 @@ export class display_transactions {
 
     private DelegateResignation = (tx) => {
         const wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(tx.senderPublicKey);
-        let transaction = `Delegate " ${wallet.getAttribute("delegate.username")} resigned.\nTimestamp: ${tx.timestamp}`;
-        transaction += `\n<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
-        return transaction;
-    }
-
-
-    //COMPENDIA
-    
-    private Stake = (tx, address) => {
-        const recipient = tx.recipientId;
-        const amount = tx.asset.stakeCreate.amount;
-        const duration = tx.asset.stakeCreate.duration;
-        let string_duration: string;
-        if (duration.isEqualTo(31557600))
-            string_duration = "1 year"
-        else if (duration.isEqualTo(15778800))
-            string_duration = "6 months"
-        else if (duration.isEqualTo(7889400))
-            string_duration = "3 months"
-        else if (duration.isEqualTo(86400))
-            string_duration = "1 day"
-        else
-            string_duration = "??"
-        let transaction: string;
-        if (recipient === address){
-            transaction = `You staked ß ${BigIntToBString(amount, 2)} for ${string_duration}\nTimestamp: ${tx.timestamp}`;
-        }else{
-            transaction = `You sent to ${recipient} ß ${BigIntToBString(amount, 2)} staked for ${string_duration}\nTimestamp: ${tx.timestamp}`;
+        const type = tx.asset.resignationType;
+        let typeString;
+        if (!type || type === 0 || type === 1) {
+            typeString = `resigned ${type ? "temporarily" : "permanently"}`;
+        } else {
+            typeString = "revoked resignation";
         }
+        let transaction = `Delegate " ${wallet.getAttribute("delegate.username")} ${typeString}.\nTimestamp: ${tx.timestamp}`;
+        if (tx.memo !== undefined)
+            transaction += `\nMemo: ${tx.memo}`;
         transaction += `\n<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
         return transaction;
     }
 
-    private RedeemStake = async (tx) => {
-        const staked_trans: Interfaces.ITransactionData | undefined = await this.transactionHistoryService.findOneByCriteria({ id: tx.asset.stakeRedeem });
-        const amount = staked_trans!.asset!.stakeCreate.amount;
-        let transaction = `You redeemed a stake of ß ${BigIntToBString(amount, 2)}\nTimestamp: ${tx.timestamp}`
+    private Burn = async (tx) => {
+        const balance = tx.amount;
+        let sender: string;
+        let wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(tx.senderPublicKey);
+        if (wallet.hasAttribute("delegate.username"))
+            sender = wallet.getAttribute("delegate.username");
+        else
+            sender = wallet.getAddress();
+        
+        
+        let transaction = `${sender} -> Burn\nAmount: ${BigIntToBString(balance, 2)}`;
+
+        if (tx.timestamp !== undefined)
+            transaction += `\nTimestamp: ${tx.timestamp}`
+
+        if (tx.memo !== undefined)
+            transaction += `\nMemo: ${tx.memo}`;
+
         transaction += `\n<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
         return transaction;
     }
 
-    private CancelStake = async (tx) => {
-        const staked_trans: Interfaces.ITransactionData | undefined = await this.transactionHistoryService.findOneByCriteria({ id: tx.asset.stakeRedeem });
-        const amount = staked_trans!.asset!.stakeCreate.amount;
-        let transaction = `You canceled a stake of ß ${BigIntToBString(amount, 2)}\nTimestamp: ${tx.timestamp}`
-        transaction += `\n<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
+    private Vote = (tx) => {
+        const votes = tx.asset.votes;
+        let transaction = "You voted for: \n";
+        for (const vote in votes){
+            const delegate = this.wallets.findByUsername(vote);
+            transaction += `${delegate.getAttribute("delegate.username")}: ${votes[vote]}%\n`
+        }
+        if (tx.timestamp !== undefined)
+            transaction += `Timestamp: ${tx.timestamp}\n`
+        if (tx.memo !== undefined)
+            transaction += `\nMemo: ${tx.memo}`;
+        transaction += `<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`
         return transaction;
     }
 

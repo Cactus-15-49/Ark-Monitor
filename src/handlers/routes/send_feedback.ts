@@ -1,4 +1,4 @@
-import { Container, Providers } from "@solar-network/core-kernel";
+import { Container, Providers } from "@solar-network/kernel";
 import { UContext } from "../../interfaces";
 
 
