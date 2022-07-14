@@ -267,7 +267,7 @@ export class alerts_handler {
                             const delegate =
                                 vote.substring(1).length > 21
                                     ? this.wallets.findByPublicKey(vote.substring(1))
-                                    : this.wallets.findByAddress(vote.substring(1));
+                                    : this.wallets.findByUsername(vote.substring(1));
                             transaction.delegates.push({
                                 delegate: delegate.getAttribute("delegate.username"),
                                 amount: vote[0] === "+" ? transaction.amount : transaction.amount.times(-1),
