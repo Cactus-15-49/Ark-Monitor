@@ -1,20 +1,20 @@
-import { Providers , Container, Contracts} from "@solar-network/kernel";
-import { Telegram_bot } from "./Telegram-bot";
-import { message_handler } from "./handlers/messages_handler";
-import { callback_handler } from "./handlers/callback_handler";
-import { display_transactions } from "./utils/display_transactions";
+import { Container, Contracts, Providers } from "@solar-network/kernel";
+
 import { alerts_handler } from "./alerts/alerts_handler";
 import { Database } from "./database/controller";
+import { callback_handler } from "./handlers/callback_handler";
+import { menu_utils } from "./handlers/menu_utils";
+import { message_handler } from "./handlers/messages_handler";
 import { init } from "./handlers/routes/init";
 import { last_transactions } from "./handlers/routes/last_transactions";
 import { menu } from "./handlers/routes/menu";
 import { notifications } from "./handlers/routes/notifications";
 import { send_feedback } from "./handlers/routes/send_feedback";
 import { settings } from "./handlers/routes/settings";
-import { menu_utils } from "./handlers/menu_utils"
+import { Telegram_bot } from "./Telegram-bot";
+import { display_transactions } from "./utils/display_transactions";
 
 export class ServiceProvider extends Providers.ServiceProvider {
-    
     public async register(): Promise<void> {
         this.app.bind(Symbol.for("TeMonitor<Telegram_bot>")).to(Telegram_bot);
         this.app.bind(Symbol.for("message_handler")).to(message_handler).inSingletonScope();
@@ -29,10 +29,8 @@ export class ServiceProvider extends Providers.ServiceProvider {
         this.app.bind(Symbol.for("send_feedback")).to(send_feedback);
         this.app.bind(Symbol.for("settings")).to(settings);
         this.app.bind(Symbol.for("menu_utils")).to(menu_utils);
-
     }
-    
-    
+
     public async boot(): Promise<void> {
         this.app.get<Database>(Symbol.for("database")).connect();
         await this.app.get<alerts_handler>(Symbol.for("alerts_handler")).start();
@@ -40,9 +38,6 @@ export class ServiceProvider extends Providers.ServiceProvider {
         this.app.get<Contracts.Kernel.Logger>(Container.Identifiers.LogService).info("Telegram BOT started!");
     }
 
-
-
-    
     public async dispose(): Promise<void> {
         //
     }

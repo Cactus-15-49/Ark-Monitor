@@ -13,11 +13,11 @@
     ],
     "scripts": {
         "build": "pnpm clean && tsc",
+        "build:watch": "pnpm clean && pnpm compile -w",
         "clean": "rimraf dist",
-        "format": "pnpm lint:fix && pnpm prettier",
-        "lint": "eslint packages/*/src --ext .ts --max-warnings 0",
-        "lint:fix": "eslint packages/*/src --ext .ts --fix",
-        "prettier": "prettier --write \"./*.{ts,js,json,md}\" \"./packages/**/*.{ts,js,json,md}\""
+        "compile": "node ../../node_modules/typescript/bin/tsc",
+        "lint": "../../node_modules/eslint/bin/eslint.js . --ext .ts --fix",
+        "prettier": "prettier --write './**/*.{ts,js,json,md}'"
     },
     "dependencies": {
         "mongoose": "^5.11.12",
@@ -25,14 +25,11 @@
         "telegraf": "3.38.0"
     },
     "devDependencies": {
-        "@solar-network/core": "workspace:*",
         "@solar-network/blockchain": "workspace:*",
-        "@solar-network/kernel": "workspace:*",
-        "@solar-network/state": "workspace:*",
+        "@solar-network/core": "workspace:*",
+        "@solar-network/crypto": "workspace:*",
         "@solar-network/database": "workspace:*",
-        "@solar-network/crypto": "workspace:*"
-    },
-    "jest": {
-        "preset": "../../jest-preset.json"
+        "@solar-network/kernel": "workspace:*",
+        "@solar-network/state": "workspace:*"
     }
 }

@@ -1,14 +1,13 @@
+import { Interfaces, Managers } from "@solar-network/crypto";
 import { Container, Contracts, Providers } from "@solar-network/kernel";
-import { Managers, Interfaces } from "@solar-network/crypto";
 import { Extra } from "telegraf";
-import { coingecko_request } from "../utils/coingecko";
+
 import { UContext } from "../interfaces";
+import { coingecko_request } from "../utils/coingecko";
 import { BigIntToBString } from "../utils/utils";
 
-
 @Container.injectable()
-export class callback_handler{
-
+export class callback_handler {
     @Container.inject(Container.Identifiers.TransactionHistoryService)
     private readonly transactionHistoryService!: Contracts.Shared.TransactionHistoryService;
 
@@ -28,11 +27,11 @@ export class callback_handler{
         const data: string | undefined = ctx.callbackQuery!.data;
         if (data === undefined) return;
         const data_array = data.split("_");
-        if (data_array.length === 2 && data_array[0] === 'update'){
-            if (data === 'update_balance') this.menu.balance(ctx);
-            else if (data === 'update_price') this.update_price(ctx);
-            else if (data === 'update_delegateinfo') this.menu.delegates_info(ctx);
-        }else if (data_array.length === 3){
+        if (data_array.length === 2 && data_array[0] === "update") {
+            if (data === "update_balance") this.menu.balance(ctx);
+            else if (data === "update_price") this.update_price(ctx);
+            else if (data === "update_delegateinfo") this.menu.delegates_info(ctx);
+        } else if (data_array.length === 3) {
             const next = data_array[0] === "next";
             if (next === false && data_array[0] !== "previous") return;
             const current_page = Number(data_array[1]);
@@ -40,90 +39,94 @@ export class callback_handler{
             const address = data_array[2];
             this.last_transactions(ctx, next, current_page, address);
         }
-
-    }
+    };
 
     private update_price = async (ctx: UContext) => {
         const coingecko = await coingecko_request(this.get_coingecko_ticker());
-        if (coingecko === undefined){
-            const message = `There are problems with CoinGecko. Try again later.`
-            const keyboard = Extra.markup((m) => m.inlineKeyboard([m.callbackButton("Update", "update_price")]))
-            try{
+        if (coingecko === undefined) {
+            const message = `There are problems with CoinGecko. Try again later.`;
+            const keyboard = Extra.markup((m) => m.inlineKeyboard([m.callbackButton("Update", "update_price")]));
+            try {
                 await ctx.editMessageText(message, keyboard);
-            }catch(e){
+            } catch (e) {
                 ctx.editMessageText(message + ".", keyboard);
             }
             return;
-        }
-        else{        
+        } else {
             const data = coingecko.market_data;
-            const price = data.current_price.usd
-            const price_btc = data.current_price.btc
-            const rank = data.market_cap_rank
-            const volume = BigIntToBString(data.total_volume.usd, 0, 0)
-            const volume_btc = BigIntToBString(data.total_volume.btc, 0, 0)
-            const market_cap = BigIntToBString(data.market_cap.usd, 0, 0)
-            const market_cap_btc = BigIntToBString(data.market_cap.btc, 0, 0)
-            const change_24h = parseFloat(data.price_change_percentage_24h).toFixed(2)
-            const change_7d = parseFloat(data.price_change_percentage_7d).toFixed(2)
-            const circulating = BigIntToBString(data.circulating_supply, 0, 0)
-            
-            const message = `${this.network.client.token} PRICE:\nPrice: ${price_btc} BTC ($${price})\nMarket cap rank: ${rank}\n\nMarket cap: ${market_cap_btc} BTC ($${market_cap})\nVolume: ${volume_btc} BTC ($${volume})\n\n24h change: ${change_24h}%\n7d change: ${change_7d}%\n\nCirculating supply: ${circulating} ${this.network.client.token}\n`
-            const keyboard = Extra.markup((m) => m.inlineKeyboard([
-                m.callbackButton("Update", "update_price")
-              ]))
-            try{
+            const price = data.current_price.usd;
+            const price_btc = data.current_price.btc;
+            const rank = data.market_cap_rank;
+            const volume = BigIntToBString(data.total_volume.usd, 0, 0);
+            const volume_btc = BigIntToBString(data.total_volume.btc, 0, 0);
+            const market_cap = BigIntToBString(data.market_cap.usd, 0, 0);
+            const market_cap_btc = BigIntToBString(data.market_cap.btc, 0, 0);
+            const change_24h = parseFloat(data.price_change_percentage_24h).toFixed(2);
+            const change_7d = parseFloat(data.price_change_percentage_7d).toFixed(2);
+            const circulating = BigIntToBString(data.circulating_supply, 0, 0);
+
+            const message = `${this.network.client.token} PRICE:\nPrice: ${price_btc} BTC ($${price})\nMarket cap rank: ${rank}\n\nMarket cap: ${market_cap_btc} BTC ($${market_cap})\nVolume: ${volume_btc} BTC ($${volume})\n\n24h change: ${change_24h}%\n7d change: ${change_7d}%\n\nCirculating supply: ${circulating} ${this.network.client.token}\n`;
+            const keyboard = Extra.markup((m) => m.inlineKeyboard([m.callbackButton("Update", "update_price")]));
+            try {
                 await ctx.editMessageText(message, keyboard);
-            }catch(e){
+            } catch (e) {
                 ctx.editMessageText(message + ".", keyboard);
             }
         }
-    }
-    
+    };
+
     private last_transactions = async (ctx: UContext, next: boolean, current_page: number, address: string) => {
         let message = "";
         let keyboard;
-        const transactions: Interfaces.ITransactionData[] = await this.transactionHistoryService.findManyByCriteria({ address: address });
-        if (next){
-            const start = transactions.length - (5 *(current_page + 1));
-            for (const transaction of transactions.slice(Math.max(start, 0), start + 5 - Math.min(start, 0)).reverse()){
+        const transactions: Interfaces.ITransactionData[] = await this.transactionHistoryService.findManyByCriteria({
+            address: address,
+        });
+        if (next) {
+            const start = transactions.length - 5 * (current_page + 1);
+            for (const transaction of transactions
+                .slice(Math.max(start, 0), start + 5 - Math.min(start, 0))
+                .reverse()) {
                 message += await this.display_transactions.display(transaction, address, ctx.chat_id);
                 message += "\n------------------------------------------------------------------\n";
             }
-            if (start <= 0 && transactions.length <= 5) keyboard = (m) => m.inlineKeyboard([
-                m.callbackButton('1', 'a')
-              ])
-            else if (start <= 0 ) keyboard = (m) => m.inlineKeyboard([
-                m.callbackButton('previous', `previous_${current_page + 1}_${address}`),
-                m.callbackButton(`${current_page + 1}`, 'a')
-              ])
-            else    keyboard = (m) => m.inlineKeyboard([
-                m.callbackButton('previous', `previous_${current_page + 1}_${address}`),
-                m.callbackButton(`${current_page + 1}`, 'a'),
-                m.callbackButton('next', `next_${current_page + 1}_${address}`)
-              ])
-        }else{
-            const start = Math.min(transactions.length - (5 * (current_page - 1)), transactions.length - 5);
-            for (const transaction of transactions.slice(Math.max(start, 0), start + 5 - Math.min(start, 0)).reverse()){
+            if (start <= 0 && transactions.length <= 5)
+                keyboard = (m) => m.inlineKeyboard([m.callbackButton("1", "a")]);
+            else if (start <= 0)
+                keyboard = (m) =>
+                    m.inlineKeyboard([
+                        m.callbackButton("previous", `previous_${current_page + 1}_${address}`),
+                        m.callbackButton(`${current_page + 1}`, "a"),
+                    ]);
+            else
+                keyboard = (m) =>
+                    m.inlineKeyboard([
+                        m.callbackButton("previous", `previous_${current_page + 1}_${address}`),
+                        m.callbackButton(`${current_page + 1}`, "a"),
+                        m.callbackButton("next", `next_${current_page + 1}_${address}`),
+                    ]);
+        } else {
+            const start = Math.min(transactions.length - 5 * (current_page - 1), transactions.length - 5);
+            for (const transaction of transactions
+                .slice(Math.max(start, 0), start + 5 - Math.min(start, 0))
+                .reverse()) {
                 message += await this.display_transactions.display(transaction, address, ctx.chat_id);
                 message += "\n------------------------------------------------------------------\n";
             }
-            
-            if (transactions.length <= 5) keyboard = (m) => m.inlineKeyboard([
-                m.callbackButton('1', 'a')
-              ])
-            else if (start === transactions.length - 5 ) keyboard = (m) => m.inlineKeyboard([
-                m.callbackButton('1', 'a'),
-                m.callbackButton('next', `next_1_${address}`)
-              ])
-            else    keyboard = (m) => m.inlineKeyboard([
-                m.callbackButton('previous', `previous_${current_page - 1}_${address}`),
-                m.callbackButton(`${current_page - 1}`, 'a'),
-                m.callbackButton('next', `next_${current_page - 1}_${address}`)
-              ])
+
+            if (transactions.length <= 5) keyboard = (m) => m.inlineKeyboard([m.callbackButton("1", "a")]);
+            else if (start === transactions.length - 5)
+                keyboard = (m) =>
+                    m.inlineKeyboard([m.callbackButton("1", "a"), m.callbackButton("next", `next_1_${address}`)]);
+            else
+                keyboard = (m) =>
+                    m.inlineKeyboard([
+                        m.callbackButton("previous", `previous_${current_page - 1}_${address}`),
+                        m.callbackButton(`${current_page - 1}`, "a"),
+                        m.callbackButton("next", `next_${current_page - 1}_${address}`),
+                    ]);
         }
         ctx.editMessageText(message, Extra.HTML().markup(keyboard));
-    }
+    };
 
     private get_coingecko_ticker(): string | undefined {
         const ticker = this.configuration.get("ticker");
