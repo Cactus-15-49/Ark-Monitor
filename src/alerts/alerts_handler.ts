@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/member-ordering */
-import { Interfaces, Managers, Utils } from "@solar-network/crypto";
+import { Interfaces, Managers, Utils, Enums as CryptoEnums } from "@solar-network/crypto";
 import { Repositories } from "@solar-network/database";
 import { Container, Contracts, Enums, Providers, Utils as AppUtils } from "@solar-network/kernel";
 import { Extra, Telegram } from "telegraf";
@@ -28,6 +28,9 @@ export class alerts_handler {
 
     @Container.inject(Container.Identifiers.DatabaseBlockRepository)
     private readonly blockRepository!: Repositories.BlockRepository;
+
+    @Container.inject(Container.Identifiers.TransactionHistoryService)
+    private readonly transactionHistoryService!: Contracts.Shared.TransactionHistoryService;
 
     @Container.inject(Symbol.for("display_transactions"))
     private readonly display_transactions;
@@ -388,7 +391,7 @@ export class alerts_handler {
                     } else if (trans.typeGroup === 2 && trans.type === 2) {
                         transaction.amount = sender.getBalance();
                         const newVotes = trans.asset!.votes!;
-                        const oldVotes: object = sender.getAllStateHistory().votes.at(-2);
+                        const oldVotes: object = this.getPreviousVotes(trans);
                         const allDelegates = Object.keys(oldVotes).concat(
                             Object.keys(newVotes).filter((item) => Object.keys(oldVotes).indexOf(item) < 0),
                         );
@@ -682,6 +685,50 @@ export class alerts_handler {
                 }
             }
         }
+    }
+
+    private async getPreviousVotes(transaction: Interfaces.ITransactionData): Promise<object> {
+        const heightAndSender = {
+            blockHeight: { to: transaction.blockHeight! - 1 },
+            senderId: transaction.senderId,
+        };
+
+        const criteria = {
+            ...heightAndSender,
+            typeGroup: CryptoEnums.TransactionTypeGroup.Solar,
+            type: CryptoEnums.TransactionType.Solar.Vote,
+        };
+
+        const legacyCriteria = {
+            ...heightAndSender,
+            typeGroup: CryptoEnums.TransactionTypeGroup.Core,
+            type: CryptoEnums.TransactionType.Core.Vote,
+        };
+
+        const { results } = await this.transactionHistoryService.listByCriteria(
+            [criteria, legacyCriteria],
+            [{ property: "blockHeight", direction: "desc" }],
+            { offset: 0, limit: 1 },
+        );
+
+        if (results[0] && results[0].asset) {
+            if (!Array.isArray(results[0].asset.votes)) {
+                return results[0].asset.votes!;
+            }
+
+            const previousVote = (results[0].asset.votes as string[]).pop();
+            if (previousVote && previousVote.startsWith("+")) {
+                let delegateVote: string = previousVote.slice(1);
+                if (delegateVote.length === 66) {
+                    delegateVote = this.wallets
+                        .findByPublicKey(delegateVote)
+                        .getAttribute("delegate.username");
+                }
+                return { [delegateVote]: 100 };
+            }
+        }
+
+        return {};
     }
 
     private get_block_transactions = (id: number): Array<Interfaces.ITransactionData> => {

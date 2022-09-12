@@ -195,9 +195,6 @@ export class display_transactions {
 
     private addFooter(message: messageComposer, tx: Interfaces.ITransactionData) {
         message.nl();
-        if (tx.timestamp !== undefined) {
-            message.addnl(`🕛: ${tx.timestamp}`);
-        }
 
         if (tx.memo !== undefined) {
             message.addnl(`🗒️: ${this.memoEncode(tx.memo)}`);
