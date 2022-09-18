@@ -100,7 +100,7 @@ export class alerts_handler {
                     }
                     for (const voter of voter_list) {
                         const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                        if (wallet.hasVoted() && wallet.getVoteBalance(username) !== undefined) {
+                        if (wallet.hasVoted() && !wallet.getVoteBalance(username).isZero()) {
                             this.bot.sendMessage(
                                 voter.chat_id,
                                 `🟢${username} (voted by ${voter.address}) is green again.🟢\nMissed blocks: ${consecutive}`,
@@ -167,7 +167,7 @@ export class alerts_handler {
                         }
                         for (const voter of voter_list) {
                             const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                            if (wallet.hasVoted() && wallet.getVoteBalance(username) !== undefined) {
+                            if (wallet.hasVoted() && !wallet.getVoteBalance(username).isZero()) {
                                 this.bot.sendMessage(
                                     voter.chat_id,
                                     `🟠${username} (voted by ${voter.address}) is Orange🟠`,
@@ -183,7 +183,7 @@ export class alerts_handler {
                         }
                         for (const voter of voter_list) {
                             const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                            if (wallet.hasVoted() && wallet.getVoteBalance(username) !== undefined) {
+                            if (wallet.hasVoted() && !wallet.getVoteBalance(username).isZero()) {
                                 this.bot.sendMessage(
                                     voter.chat_id,
                                     `🔴${username} (voted by ${voter.address}) is Red🔴\nℹ️Missed blocks: ${consecutive}`,
@@ -200,7 +200,7 @@ export class alerts_handler {
                     } else if (consecutive % 212 === 0) {
                         for (const voter of voter_list) {
                             const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                            if (wallet.hasVoted() && wallet.getVoteBalance(username) !== undefined) {
+                            if (wallet.hasVoted() && !wallet.getVoteBalance(username).isZero()) {
                                 this.bot.sendMessage(
                                     voter.chat_id,
                                     `🔴${username} (voted by ${voter.address}) is Red🔴\nℹ️Missed blocks: ${consecutive}`,
@@ -456,7 +456,7 @@ export class alerts_handler {
                     const voter_list: Voter[] = await this.db.get_all_voters_outForging();
                     for (const voter of voter_list) {
                         const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                        if (wallet.hasVoted() && wallet.getVoteBalance(delegate.username) !== undefined) {
+                        if (wallet.hasVoted() && !wallet.getVoteBalance(delegate.username).isZero()) {
                             this.bot.sendMessage(
                                 voter.chat_id,
                                 `⚠️Delegate ${delegate.username} (voted by ${voter.address}) is out from the forging delegates!⚠️\nℹ️New Rank: ${new_rank}.`,
@@ -477,7 +477,7 @@ export class alerts_handler {
                         }
                         for (const voter of voter_list) {
                             const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                            if (wallet.hasVoted() && wallet.getVoteBalance(delegate.username) !== undefined) {
+                            if (wallet.hasVoted() && !wallet.getVoteBalance(delegate.username).isZero()) {
                                 this.bot.sendMessage(
                                     voter.chat_id,
                                     `⚠️${delegate.username} (voted by ${voter.address}) is out because he was red.⚠️\nℹ️Missed blocks: ${consecutive}`,
@@ -491,7 +491,7 @@ export class alerts_handler {
                     const voter_list: Voter[] = await this.db.get_all_voters_outForging();
                     for (const voter of voter_list) {
                         const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
-                        if (wallet.hasVoted() && wallet.getVoteBalance(delegate.username) !== undefined) {
+                        if (wallet.hasVoted() && !wallet.getVoteBalance(delegate.username).isZero()) {
                             this.bot.sendMessage(
                                 voter.chat_id,
                                 `🤑Delegate ${delegate.username} (voted by ${voter.address}) is now in a forging position!🤑\nℹ️New Rank: ${new_rank}.`,

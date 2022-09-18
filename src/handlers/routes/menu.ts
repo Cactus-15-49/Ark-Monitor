@@ -243,7 +243,7 @@ export class menu {
                     const voting_wallet = ctx.user.voters.filter((voter) => {
                         const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
                         if (wallet.hasVoted()) {
-                            return wallet.getVoteBalance(username) !== undefined;
+                            return !wallet.getVoteBalance(username).isZero();
                         }
                         return false;
                     });
@@ -264,7 +264,7 @@ export class menu {
                     const voting_wallet = ctx.user.voters.filter((voter) => {
                         const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
                         if (wallet.hasVoted()) {
-                            return wallet.getVoteBalance(username) !== undefined;
+                            return !wallet.getVoteBalance(username).isZero();
                         }
                         return false;
                     });
