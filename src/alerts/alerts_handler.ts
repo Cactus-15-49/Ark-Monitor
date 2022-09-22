@@ -1,6 +1,7 @@
 import { Enums as CryptoEnums, Interfaces, Managers, Utils } from "@solar-network/crypto";
 import { Repositories } from "@solar-network/database";
 import { Container, Contracts, Enums, Providers, Utils as AppUtils } from "@solar-network/kernel";
+import delay from "delay";
 import { Extra, Telegram } from "telegraf";
 
 import { Delegate, simplified_transaction, TransactionsTypes, Voter } from "../interfaces";
@@ -45,7 +46,6 @@ export class alerts_handler {
     private network = Managers.configManager.get("network");
 
     private LAST_BLOCK_DELEGATES: Array<Contracts.State.WalletDelegateAttributes & { publicKey: string }> = [];
-    private transactions_queue: Array<Interfaces.ITransactionData> = [];
 
     // eslint-disable-next-line @typescript-eslint/member-ordering
     public missing_delegates = new Map<string, number>();
@@ -109,8 +109,6 @@ export class alerts_handler {
 
         this.events.listen(Enums.TransactionEvent.Applied, {
             handle: async ({ data }: { data: Interfaces.ITransactionData }) => {
-                this.transactions_queue.push(data);
-
                 const transaction: Interfaces.ITransactionData = data;
                 const sender_p_key = transaction.senderPublicKey;
                 const wallet: Contracts.State.Wallet = this.wallets.findByPublicKey(sender_p_key);
@@ -239,7 +237,7 @@ export class alerts_handler {
             });
 
         if (delegates_difference.length > 0) {
-            const transactions = this.get_block_transactions(block.height);
+            const transactions = await this.get_block_transactions(block.height);
             const normalized_transactions = transactions.flatMap((trans) => {
                 const sender = this.wallets.findByPublicKey(trans.senderPublicKey);
 
@@ -716,11 +714,18 @@ export class alerts_handler {
         return {};
     }
 
-    private get_block_transactions = (id: number): Array<Interfaces.ITransactionData> => {
-        const temp = this.transactions_queue.filter((o) => o.blockHeight === id);
-        this.transactions_queue = this.transactions_queue.filter((o) => o.blockHeight! > id);
-        return temp;
-    };
+    private async get_block_transactions(id: number): Promise<Array<Interfaces.ITransactionData>> {
+        while (id > (await this.getLastBlockHeight())) {
+            await delay(100);
+        }
+
+        const transactions = (await this.blockRepository.findByHeightRangeWithTransactions(id, id))[0].transactions;
+        return transactions ?? [];
+    }
+
+    private async getLastBlockHeight(): Promise<number> {
+        return (await this.blockRepository.findLatest())!.height;
+    }
 
     private init = async () => {
         this.logger.info("Missed block calculation started");

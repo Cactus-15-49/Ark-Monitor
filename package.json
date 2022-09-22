@@ -20,6 +20,7 @@
         "prettier": "prettier --write './**/*.{ts,js,json,md}'"
     },
     "dependencies": {
+        "delay": "5.0.0",
         "mongoose": "^5.11.12",
         "node-fetch": "^2.6.1",
         "telegraf": "3.38.0"
