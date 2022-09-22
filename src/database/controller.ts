@@ -27,6 +27,12 @@ export class Database {
         return user;
     }
 
+    public async delete_user(chat_id: number) {
+        await users.deleteMany({ chat_id });
+        await delegates.deleteMany({ chat_id });
+        await voters.deleteMany({ chat_id });
+    }
+
     public async enter_menu(chat_id: number, current_state: Array<string>, menu: string, go_back: number = 0) {
         let new_state_array = current_state;
         if (go_back > 0) {

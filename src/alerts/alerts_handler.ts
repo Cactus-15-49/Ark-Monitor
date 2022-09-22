@@ -92,15 +92,12 @@ export class alerts_handler {
 
                     const voter_list: Voter[] = await this.db.get_all_voters_Rednodes();
                     for (const chat of delegate_chat) {
-                        this.bot.sendMessage(
-                            chat.chat_id,
-                            `🟢${username} is Green again.🟢\nMissed blocks: ${consecutive}`,
-                        );
+                        this.sendAlert(chat.chat_id, `🟢${username} is Green again.🟢\nMissed blocks: ${consecutive}`);
                     }
                     for (const voter of voter_list) {
                         const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
                         if (wallet.hasVoted() && !wallet.getVoteBalance(username).isZero()) {
-                            this.bot.sendMessage(
+                            this.sendAlert(
                                 voter.chat_id,
                                 `🟢${username} (voted by ${voter.address}) is green again.🟢\nMissed blocks: ${consecutive}`,
                             );
@@ -130,14 +127,14 @@ export class alerts_handler {
                 for (const address of addresses) {
                     const alerts = await this.db.get_voter_by_address_and_transaction(address);
                     for (const alert of alerts) {
-                        this.bot.sendMessage(
-                            alert.chat_id,
+                        this.sendAlert(
+                            alert.chat_id as number,
                             `🆕 TRANSACTION⚠️\n${await this.display_transactions.display(
                                 transaction,
                                 alert.address,
                                 alert.chat_id,
                             )}`,
-                            Extra.webPreview(false).HTML(),
+                            true,
                         );
                     }
                 }
@@ -162,28 +159,22 @@ export class alerts_handler {
 
                     if (consecutive === 1) {
                         for (const chat of delegate_chat) {
-                            this.bot.sendMessage(chat.chat_id, `🟠${username} is Orange🟠`);
+                            this.sendAlert(chat.chat_id, `🟠${username} is Orange🟠`);
                         }
                         for (const voter of voter_list) {
                             const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
                             if (wallet.hasVoted() && !wallet.getVoteBalance(username).isZero()) {
-                                this.bot.sendMessage(
-                                    voter.chat_id,
-                                    `🟠${username} (voted by ${voter.address}) is Orange🟠`,
-                                );
+                                this.sendAlert(voter.chat_id, `🟠${username} (voted by ${voter.address}) is Orange🟠`);
                             }
                         }
                     } else if (consecutive === 2) {
                         for (const chat of delegate_chat) {
-                            this.bot.sendMessage(
-                                chat.chat_id,
-                                `🔴${username} is Red🔴\nℹ️Missed blocks: ${consecutive}`,
-                            );
+                            this.sendAlert(chat.chat_id, `🔴${username} is Red🔴\nℹ️Missed blocks: ${consecutive}`);
                         }
                         for (const voter of voter_list) {
                             const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
                             if (wallet.hasVoted() && !wallet.getVoteBalance(username).isZero()) {
-                                this.bot.sendMessage(
+                                this.sendAlert(
                                     voter.chat_id,
                                     `🔴${username} (voted by ${voter.address}) is Red🔴\nℹ️Missed blocks: ${consecutive}`,
                                 );
@@ -191,16 +182,13 @@ export class alerts_handler {
                         }
                     } else if (consecutive % 18 === 0) {
                         for (const chat of delegate_chat) {
-                            this.bot.sendMessage(
-                                chat.chat_id,
-                                `🔴${username} is Red🔴\nℹ️Missed blocks: ${consecutive}`,
-                            );
+                            this.sendAlert(chat.chat_id, `🔴${username} is Red🔴\nℹ️Missed blocks: ${consecutive}`);
                         }
                     } else if (consecutive % 212 === 0) {
                         for (const voter of voter_list) {
                             const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
                             if (wallet.hasVoted() && !wallet.getVoteBalance(username).isZero()) {
-                                this.bot.sendMessage(
+                                this.sendAlert(
                                     voter.chat_id,
                                     `🔴${username} (voted by ${voter.address}) is Red🔴\nℹ️Missed blocks: ${consecutive}`,
                                 );
@@ -249,7 +237,7 @@ export class alerts_handler {
             .filter((element) => {
                 return !element.votediff.isZero() || element.rankdiff !== 0;
             });
-        this.logger.debug("------------------------------------");
+
         if (delegates_difference.length > 0) {
             const transactions = this.get_block_transactions(block.height);
             const normalized_transactions = transactions.flatMap((trans) => {
@@ -434,11 +422,6 @@ export class alerts_handler {
                 const delta_votes: Utils.BigNumber = delegate.votediff;
                 const new_votes: Utils.BigNumber = delegate.voteBalance;
                 const old_votes = new_votes.minus(delta_votes);
-                this.logger.debug(delegate.username);
-                this.logger.debug(delta_rank);
-                this.logger.debug(new_rank);
-                this.logger.debug(old_rank);
-                this.logger.debug(delta_votes);
                 const change_voters = delegate.transactions.some((o) => o.type === TransactionsTypes.vote);
 
                 message.add(`🥇 Rank: ${old_rank}`).spc();
@@ -462,7 +445,7 @@ export class alerts_handler {
                     for (const voter of voter_list) {
                         const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
                         if (wallet.hasVoted() && !wallet.getVoteBalance(delegate.username).isZero()) {
-                            this.bot.sendMessage(
+                            this.sendAlert(
                                 voter.chat_id,
                                 `⚠️Delegate ${delegate.username} (voted by ${voter.address}) is out from the forging delegates!⚠️\nℹ️New Rank: ${new_rank}.`,
                             );
@@ -475,7 +458,7 @@ export class alerts_handler {
 
                         const voter_list: Voter[] = await this.db.get_all_voters_Rednodes();
                         for (const chat of delegate_chat) {
-                            this.bot.sendMessage(
+                            this.sendAlert(
                                 chat.chat_id,
                                 `⚠️${delegate.username} is out because he was red.⚠️\nℹ️Missed blocks: ${consecutive}`,
                             );
@@ -483,7 +466,7 @@ export class alerts_handler {
                         for (const voter of voter_list) {
                             const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
                             if (wallet.hasVoted() && !wallet.getVoteBalance(delegate.username).isZero()) {
-                                this.bot.sendMessage(
+                                this.sendAlert(
                                     voter.chat_id,
                                     `⚠️${delegate.username} (voted by ${voter.address}) is out because he was red.⚠️\nℹ️Missed blocks: ${consecutive}`,
                                 );
@@ -497,7 +480,7 @@ export class alerts_handler {
                     for (const voter of voter_list) {
                         const wallet: Contracts.State.Wallet = this.wallets.findByAddress(voter.address);
                         if (wallet.hasVoted() && !wallet.getVoteBalance(delegate.username).isZero()) {
-                            this.bot.sendMessage(
+                            this.sendAlert(
                                 voter.chat_id,
                                 `🤑Delegate ${delegate.username} (voted by ${voter.address}) is now in a forging position!🤑\nℹ️New Rank: ${new_rank}.`,
                             );
@@ -648,8 +631,6 @@ export class alerts_handler {
                             if (n_iterations >= 3) break;
                         }
 
-                        this.logger.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-
                         if (new_message.len() && message.len() + new_message.len() >= 4000) {
                             for (const chat of chat_id_list) {
                                 if (
@@ -663,7 +644,7 @@ export class alerts_handler {
                                     (chat.Position === "ON" && Math.abs(delta_rank) > 0) ||
                                     (change_voters && chat.Voters === "ON")
                                 )
-                                    this.bot.sendMessage(chat.chat_id, message.get(), Extra.webPreview(false).HTML());
+                                    this.sendAlert(chat.chat_id, message.get(), true);
                             }
                             message.set(new_message.get());
                         } else {
@@ -686,7 +667,7 @@ export class alerts_handler {
                             (chat.Position === "ON" && Math.abs(delta_rank) > 0) ||
                             (change_voters && chat.Voters === "ON")
                         )
-                            this.bot.sendMessage(chat.chat_id, message.get(), Extra.webPreview(false).HTML());
+                            this.sendAlert(chat.chat_id, message.get(), true);
                     }
                 }
             }
@@ -819,5 +800,21 @@ export class alerts_handler {
         }
 
         return activeDelegates;
+    }
+
+    private async sendAlert(chatId: number, message: string, isHTML = false) {
+        try {
+            await this.bot.sendMessage(chatId, message, isHTML ? Extra.webPreview(false).HTML() : undefined);
+        } catch (err) {
+            if (
+                err.response &&
+                err.response.error_code === 403 &&
+                err.response.description.includes("blocked by the user")
+            ) {
+                const chatId = err.on.payload.chat_id;
+                this.logger.warning(`Removing ${chatId} because he blocked our telegram bot!`);
+                this.db.delete_user(chatId);
+            }
+        }
     }
 }
