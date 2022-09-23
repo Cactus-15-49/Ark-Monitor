@@ -238,167 +238,172 @@ export class alerts_handler {
 
         if (delegates_difference.length > 0) {
             const transactions = await this.get_block_transactions(block.height);
-            const normalized_transactions = transactions.flatMap((trans) => {
-                const sender = this.wallets.findByPublicKey(trans.senderPublicKey);
+            const normalized_transactions = (
+                await Promise.all(
+                    transactions.map(async (trans) => {
+                        const sender = this.wallets.findByPublicKey(trans.senderPublicKey);
 
-                const transaction: simplified_transaction = {
-                    type: TransactionsTypes.vote,
-                    id: trans.id!,
-                    sender: sender.getAddress(),
-                    recipient: undefined,
-                    amount: trans.amount,
-                    delegates: [],
-                };
+                        const transaction: simplified_transaction = {
+                            type: TransactionsTypes.vote,
+                            id: trans.id!,
+                            sender: sender.getAddress(),
+                            recipient: undefined,
+                            amount: trans.amount,
+                            delegates: [],
+                        };
 
-                const senderVote = sender.getVoteDistribution();
-                if (trans.typeGroup === 1 && trans.type === 3) {
-                    transaction.amount = sender.getBalance();
-                    const votes = trans.asset!.votes as string[];
-                    for (const vote of votes) {
-                        const delegate =
-                            vote.substring(1).length > 21
-                                ? this.wallets.findByPublicKey(vote.substring(1))
-                                : this.wallets.findByUsername(vote.substring(1));
-                        transaction.delegates.push({
-                            delegate: delegate.getAttribute("delegate.username"),
-                            amount: vote[0] === "+" ? transaction.amount : transaction.amount.times(-1),
-                        });
-                    }
-                    if (transaction.delegates[0].delegate === transaction.delegates[1].delegate) {
-                        transaction.delegates = [];
-                    }
-                    return transaction;
-                } else if (trans.typeGroup === 1 && trans.type === 6) {
-                    const multi_transactions: simplified_transaction[] = [];
-                    transaction.type = TransactionsTypes.transfer;
-
-                    for (const transfer of trans.asset!.transfers!) {
-                        transaction.delegates = [];
-                        transaction.amount = transfer.amount;
-                        transaction.recipient = transfer.recipientId;
-                        for (const delegate of Object.keys(senderVote)) {
-                            transaction.delegates.push({
-                                delegate,
-                                amount: transaction.amount
-                                    .times(Math.round(-senderVote[delegate].percent * 100))
-                                    .dividedBy(10000),
-                            });
-                        }
-                        const recipient = this.wallets.findByAddress(transaction.recipient);
-                        const recipientVote = recipient.getVoteDistribution();
-                        for (const delegate of Object.keys(recipientVote)) {
-                            if (transaction.delegates.find((del) => del.delegate === delegate)) {
-                                transaction.delegates = transaction.delegates.map((del) => {
-                                    if (del.delegate === delegate)
-                                        return {
-                                            delegate: del.delegate,
-                                            amount: del.amount.plus(
-                                                transaction.amount
-                                                    .times(Math.round(recipientVote[delegate].percent * 100))
-                                                    .dividedBy(10000),
-                                            ),
-                                        };
-                                    return del;
+                        const senderVote = sender.getVoteDistribution();
+                        if (trans.typeGroup === 1 && trans.type === 3) {
+                            transaction.amount = sender.getBalance();
+                            const votes = trans.asset!.votes as string[];
+                            for (const vote of votes) {
+                                const delegate =
+                                    vote.substring(1).length > 21
+                                        ? this.wallets.findByPublicKey(vote.substring(1))
+                                        : this.wallets.findByUsername(vote.substring(1));
+                                transaction.delegates.push({
+                                    delegate: delegate.getAttribute("delegate.username"),
+                                    amount: vote[0] === "+" ? transaction.amount : transaction.amount.times(-1),
                                 });
-                            } else {
+                            }
+                            if (transaction.delegates[0].delegate === transaction.delegates[1].delegate) {
+                                transaction.delegates = [];
+                            }
+                            return transaction;
+                        } else if (trans.typeGroup === 1 && trans.type === 6) {
+                            const multi_transactions: simplified_transaction[] = [];
+                            transaction.type = TransactionsTypes.transfer;
+
+                            for (const transfer of trans.asset!.transfers!) {
+                                transaction.delegates = [];
+                                transaction.amount = transfer.amount;
+                                transaction.recipient = transfer.recipientId;
+                                for (const delegate of Object.keys(senderVote)) {
+                                    transaction.delegates.push({
+                                        delegate,
+                                        amount: transaction.amount
+                                            .times(Math.round(-senderVote[delegate].percent * 100))
+                                            .dividedBy(10000),
+                                    });
+                                }
+                                const recipient = this.wallets.findByAddress(transaction.recipient);
+                                const recipientVote = recipient.getVoteDistribution();
+                                for (const delegate of Object.keys(recipientVote)) {
+                                    if (transaction.delegates.find((del) => del.delegate === delegate)) {
+                                        transaction.delegates = transaction.delegates.map((del) => {
+                                            if (del.delegate === delegate)
+                                                return {
+                                                    delegate: del.delegate,
+                                                    amount: del.amount.plus(
+                                                        transaction.amount
+                                                            .times(Math.round(recipientVote[delegate].percent * 100))
+                                                            .dividedBy(10000),
+                                                    ),
+                                                };
+                                            return del;
+                                        });
+                                    } else {
+                                        transaction.delegates.push({
+                                            delegate,
+                                            amount: transaction.amount
+                                                .times(Math.round(recipientVote[delegate].percent * 100))
+                                                .dividedBy(10000),
+                                        });
+                                    }
+                                }
+                                transaction.delegates = transaction.delegates.filter((del) => !del.amount.isZero());
+                                if (transaction.delegates.length) {
+                                    multi_transactions.push({ ...transaction, delegates: [...transaction.delegates] });
+                                }
+                            }
+                            return multi_transactions;
+                        } else if (trans.typeGroup === 1 && trans.type === 0) {
+                            transaction.type = TransactionsTypes.transfer;
+
+                            transaction.delegates = [];
+                            transaction.recipient = trans.recipientId;
+                            for (const delegate of Object.keys(senderVote)) {
                                 transaction.delegates.push({
                                     delegate,
                                     amount: transaction.amount
-                                        .times(Math.round(recipientVote[delegate].percent * 100))
+                                        .times(Math.round(-senderVote[delegate].percent * 100))
                                         .dividedBy(10000),
                                 });
                             }
+                            const recipient = this.wallets.findByAddress(transaction.recipient!);
+                            const recipientVote = recipient.getVoteDistribution();
+                            for (const delegate of Object.keys(recipientVote)) {
+                                if (transaction.delegates.find((del) => del.delegate === delegate)) {
+                                    transaction.delegates = transaction.delegates.map((del) => {
+                                        if (del.delegate === delegate)
+                                            return {
+                                                delegate: del.delegate,
+                                                amount: del.amount.plus(
+                                                    transaction.amount
+                                                        .times(Math.round(recipientVote[delegate].percent * 100))
+                                                        .dividedBy(10000),
+                                                ),
+                                            };
+                                        return del;
+                                    });
+                                } else {
+                                    transaction.delegates.push({
+                                        delegate,
+                                        amount: transaction.amount
+                                            .times(Math.round(recipientVote[delegate].percent * 100))
+                                            .dividedBy(10000),
+                                    });
+                                }
+                            }
+                            transaction.delegates = transaction.delegates.filter((del) => !del.amount.isZero());
+                            if (transaction.delegates.length) {
+                                return transaction;
+                            }
+
+                            return [];
+                        } else if (trans.typeGroup === 2 && trans.type === 0) {
+                            transaction.type = TransactionsTypes.burn;
+
+                            transaction.delegates = [];
+                            for (const delegate of Object.keys(senderVote)) {
+                                transaction.delegates.push({
+                                    delegate,
+                                    amount: transaction.amount
+                                        .times(Math.round(-senderVote[delegate].percent * 100))
+                                        .dividedBy(10000),
+                                });
+                            }
+                            if (transaction.delegates.length) {
+                                return transaction;
+                            }
+
+                            return [];
+                        } else if (trans.typeGroup === 2 && trans.type === 2) {
+                            transaction.amount = sender.getBalance();
+                            const newVotes = trans.asset!.votes!;
+                            const oldVotes: object = await this.getPreviousVotes(trans, block.height);
+                            const allDelegates = Object.keys(oldVotes).concat(
+                                Object.keys(newVotes).filter((item) => Object.keys(oldVotes).indexOf(item) < 0),
+                            );
+
+                            for (const delegate of allDelegates) {
+                                const diff = transaction.amount
+                                    .times(Math.round((newVotes[delegate] || 0) * 100))
+                                    .minus(transaction.amount.times(Math.round((oldVotes[delegate] || 0) * 100)))
+                                    .dividedBy(10000);
+                                transaction.delegates.push({ delegate, amount: diff });
+                            }
+                            transaction.delegates = transaction.delegates.filter((del) => !del.amount.isZero());
+                            if (transaction.delegates.length) {
+                                return transaction;
+                            }
+                            return [];
                         }
-                        transaction.delegates = transaction.delegates.filter((del) => !del.amount.isZero());
-                        if (transaction.delegates.length) {
-                            multi_transactions.push({ ...transaction, delegates: [...transaction.delegates] });
-                        }
-                    }
-                    return multi_transactions;
-                } else if (trans.typeGroup === 1 && trans.type === 0) {
-                    transaction.type = TransactionsTypes.transfer;
 
-                    transaction.delegates = [];
-                    transaction.recipient = trans.recipientId;
-                    for (const delegate of Object.keys(senderVote)) {
-                        transaction.delegates.push({
-                            delegate,
-                            amount: transaction.amount
-                                .times(Math.round(-senderVote[delegate].percent * 100))
-                                .dividedBy(10000),
-                        });
-                    }
-                    const recipient = this.wallets.findByAddress(transaction.recipient!);
-                    const recipientVote = recipient.getVoteDistribution();
-                    for (const delegate of Object.keys(recipientVote)) {
-                        if (transaction.delegates.find((del) => del.delegate === delegate)) {
-                            transaction.delegates = transaction.delegates.map((del) => {
-                                if (del.delegate === delegate)
-                                    return {
-                                        delegate: del.delegate,
-                                        amount: del.amount.plus(
-                                            transaction.amount
-                                                .times(Math.round(recipientVote[delegate].percent * 100))
-                                                .dividedBy(10000),
-                                        ),
-                                    };
-                                return del;
-                            });
-                        } else {
-                            transaction.delegates.push({
-                                delegate,
-                                amount: transaction.amount
-                                    .times(Math.round(recipientVote[delegate].percent * 100))
-                                    .dividedBy(10000),
-                            });
-                        }
-                    }
-                    transaction.delegates = transaction.delegates.filter((del) => !del.amount.isZero());
-                    if (transaction.delegates.length) {
-                        return transaction;
-                    }
-
-                    return [];
-                } else if (trans.typeGroup === 2 && trans.type === 0) {
-                    transaction.type = TransactionsTypes.burn;
-
-                    transaction.delegates = [];
-                    for (const delegate of Object.keys(senderVote)) {
-                        transaction.delegates.push({
-                            delegate,
-                            amount: transaction.amount
-                                .times(Math.round(-senderVote[delegate].percent * 100))
-                                .dividedBy(10000),
-                        });
-                    }
-                    if (transaction.delegates.length) {
-                        return transaction;
-                    }
-
-                    return [];
-                } else if (trans.typeGroup === 2 && trans.type === 2) {
-                    transaction.amount = sender.getBalance();
-                    const newVotes = trans.asset!.votes!;
-                    const oldVotes: object = this.getPreviousVotes(trans);
-                    const allDelegates = Object.keys(oldVotes).concat(
-                        Object.keys(newVotes).filter((item) => Object.keys(oldVotes).indexOf(item) < 0),
-                    );
-                    for (const delegate of allDelegates) {
-                        const diff = transaction.amount
-                            .times(Math.round((newVotes[delegate] || 0) * 100))
-                            .minus(transaction.amount.times(Math.round((oldVotes[delegate] || 0) * 100)))
-                            .dividedBy(10000);
-                        transaction.delegates.push({ delegate, amount: diff });
-                    }
-                    transaction.delegates = transaction.delegates.filter((del) => !del.amount.isZero());
-                    if (transaction.delegates.length) {
-                        return transaction;
-                    }
-                    return [];
-                }
-
-                return [];
-            });
+                        return [];
+                    }),
+                )
+            ).flat(1);
 
             const result = delegates_difference.map((wallet) => {
                 wallet.transactions = normalized_transactions.filter((o) =>
@@ -672,9 +677,9 @@ export class alerts_handler {
         }
     }
 
-    private async getPreviousVotes(transaction: Interfaces.ITransactionData): Promise<object> {
+    private async getPreviousVotes(transaction: Interfaces.ITransactionData, height: number): Promise<object> {
         const heightAndSender = {
-            blockHeight: { to: transaction.blockHeight! - 1 },
+            blockHeight: { to: height - 1 },
             senderId: transaction.senderId,
         };
 
@@ -710,7 +715,6 @@ export class alerts_handler {
                 return { [delegateVote]: 100 };
             }
         }
-
         return {};
     }
 
