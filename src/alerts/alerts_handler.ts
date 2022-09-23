@@ -405,6 +405,32 @@ export class alerts_handler {
                 )
             ).flat(1);
 
+            const generator = this.wallets.findByPublicKey(block.generatorPublicKey);
+            const blockReward = block.reward.minus(
+                Object.values(block.donations! as { [key: string]: Utils.BigNumber }).reduce(
+                    (prev, curr) => prev.plus(curr),
+                    Utils.BigNumber.ZERO,
+                ),
+            );
+            const fees = block.totalFee.minus(block.burnedFee || 0);
+
+            normalized_transactions.push({
+                type: TransactionsTypes.blockRewards,
+                id: block.id!,
+                sender: generator.getAttribute("delegate.username"),
+                recipient: generator.getAddress(),
+                amount: blockReward.plus(fees),
+                delegates: Object.entries(generator.getVoteDistribution()).map(([delegate, vote]) => {
+                    return {
+                        delegate,
+                        amount: blockReward
+                            .plus(fees)
+                            .times(Math.round(vote.percent * 100))
+                            .dividedBy(10000),
+                    };
+                }),
+            });
+
             const result = delegates_difference.map((wallet) => {
                 wallet.transactions = normalized_transactions.filter((o) =>
                     o.delegates.find((delegate) => wallet.username === delegate.delegate),
@@ -517,10 +543,17 @@ export class alerts_handler {
                             message.add("⬅️");
                         } else if (trans.type === TransactionsTypes.burn) {
                             message.add("🔥");
+                        } else if (trans.type === TransactionsTypes.blockRewards) {
+                            message
+                                .addDelegate(trans.sender, trans.recipient!, this.network.client.explorer as string)
+                                .add(`⛏️`);
                         }
                         message.addAmount(amount.isNegative() ? amount.times(-1) : amount, 8, true).nl();
+
                         message.addnl(
-                            `<a href="${this.network.client.explorer}/transaction/${trans.id}">View on explorer</a>`,
+                            `<a href="${this.network.client.explorer}/${
+                                trans.type === TransactionsTypes.blockRewards ? "block" : "transaction"
+                            }/${trans.id}">View on explorer</a>`,
                         );
                     }
                 }
@@ -629,6 +662,22 @@ export class alerts_handler {
                                         `↳<a href="${this.network.client.explorer}/transaction/${trans.id}">View on explorer</a>`,
                                     );
                                     n_iterations += 1;
+                                } else if (trans.type === TransactionsTypes.blockRewards) {
+                                    new_message
+                                        .add("↳")
+                                        .addDelegate(
+                                            trans.sender,
+                                            trans.recipient!,
+                                            this.network.client.explorer as string,
+                                        );
+                                    new_message.add("⛏️");
+                                    new_message
+                                        .addAmount(amount.isNegative() ? amount.times(-1) : amount, 8, true)
+                                        .nl();
+                                    new_message.addnl(
+                                        `↳<a href="${this.network.client.explorer}/block/${trans.id}">View on explorer</a>`,
+                                    );
+                                    n_iterations += 1;
                                 }
                             }
                             if (n_iterations >= 3) break;
@@ -657,7 +706,7 @@ export class alerts_handler {
                 }
 
                 if (!hasReasons) {
-                    message.addnl("- Probably block rewards");
+                    message.addnl("- Unknown transaction");
                 }
                 if (message.len()) {
                     for (const chat of chat_id_list) {

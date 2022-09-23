@@ -67,6 +67,11 @@ export class messageComposer {
         return this;
     }
 
+    public addDelegate(username: string, address: string, link: string) {
+        this.add(`<a href="${link}/wallets/${address}">${username}</a>`);
+        return this;
+    }
+
     public addAmount(amount: Utils.BigNumber, precision: number, includeSymbol?: boolean) {
         this.message += BigIntToBString(amount, precision);
         if (includeSymbol) {

@@ -54,6 +54,7 @@ export enum TransactionsTypes {
     vote,
     transfer,
     burn,
+    blockRewards,
 }
 
 export interface simplified_transaction {
