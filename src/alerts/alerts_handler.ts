@@ -278,17 +278,17 @@ export class alerts_handler {
                                 transaction.delegates = [];
                                 transaction.amount = transfer.amount;
                                 transaction.recipient = transfer.recipientId;
-                                for (const delegate of Object.keys(senderVote)) {
+                                for (const [delegate, {percent}] of senderVote.entries()) {
                                     transaction.delegates.push({
                                         delegate,
                                         amount: transaction.amount
-                                            .times(Math.round(-senderVote[delegate].percent * 100))
+                                            .times(Math.round(-percent * 100))
                                             .dividedBy(10000),
                                     });
                                 }
                                 const recipient = this.wallets.findByAddress(transaction.recipient);
                                 const recipientVote = recipient.getVoteDistribution();
-                                for (const delegate of Object.keys(recipientVote)) {
+                                for (const [delegate, {percent}] of recipientVote.entries()) {
                                     if (transaction.delegates.find((del) => del.delegate === delegate)) {
                                         transaction.delegates = transaction.delegates.map((del) => {
                                             if (del.delegate === delegate)
@@ -296,7 +296,7 @@ export class alerts_handler {
                                                     delegate: del.delegate,
                                                     amount: del.amount.plus(
                                                         transaction.amount
-                                                            .times(Math.round(recipientVote[delegate].percent * 100))
+                                                            .times(Math.round(percent * 100))
                                                             .dividedBy(10000),
                                                     ),
                                                 };
@@ -306,7 +306,7 @@ export class alerts_handler {
                                         transaction.delegates.push({
                                             delegate,
                                             amount: transaction.amount
-                                                .times(Math.round(recipientVote[delegate].percent * 100))
+                                                .times(Math.round(percent * 100))
                                                 .dividedBy(10000),
                                         });
                                     }
@@ -322,17 +322,17 @@ export class alerts_handler {
 
                             transaction.delegates = [];
                             transaction.recipient = trans.recipientId;
-                            for (const delegate of Object.keys(senderVote)) {
+                            for (const [delegate, {percent}] of senderVote.entries()) {
                                 transaction.delegates.push({
                                     delegate,
                                     amount: transaction.amount
-                                        .times(Math.round(-senderVote[delegate].percent * 100))
+                                        .times(Math.round(-percent * 100))
                                         .dividedBy(10000),
                                 });
                             }
                             const recipient = this.wallets.findByAddress(transaction.recipient!);
                             const recipientVote = recipient.getVoteDistribution();
-                            for (const delegate of Object.keys(recipientVote)) {
+                            for (const [delegate, {percent}] of recipientVote.entries()) {
                                 if (transaction.delegates.find((del) => del.delegate === delegate)) {
                                     transaction.delegates = transaction.delegates.map((del) => {
                                         if (del.delegate === delegate)
@@ -340,7 +340,7 @@ export class alerts_handler {
                                                 delegate: del.delegate,
                                                 amount: del.amount.plus(
                                                     transaction.amount
-                                                        .times(Math.round(recipientVote[delegate].percent * 100))
+                                                        .times(Math.round(percent * 100))
                                                         .dividedBy(10000),
                                                 ),
                                             };
@@ -350,7 +350,7 @@ export class alerts_handler {
                                     transaction.delegates.push({
                                         delegate,
                                         amount: transaction.amount
-                                            .times(Math.round(recipientVote[delegate].percent * 100))
+                                            .times(Math.round(percent * 100))
                                             .dividedBy(10000),
                                     });
                                 }
@@ -365,11 +365,11 @@ export class alerts_handler {
                             transaction.type = TransactionsTypes.burn;
 
                             transaction.delegates = [];
-                            for (const delegate of Object.keys(senderVote)) {
+                            for (const [delegate, {percent}] of senderVote.entries()) {
                                 transaction.delegates.push({
                                     delegate,
                                     amount: transaction.amount
-                                        .times(Math.round(-senderVote[delegate].percent * 100))
+                                        .times(Math.round(-percent * 100))
                                         .dividedBy(10000),
                                 });
                             }
@@ -420,7 +420,7 @@ export class alerts_handler {
                 sender: generator.getAttribute("delegate.username"),
                 recipient: generator.getAddress(),
                 amount: blockReward.plus(fees),
-                delegates: Object.entries(generator.getVoteDistribution()).map(([delegate, vote]) => {
+                delegates: [...generator.getVoteDistribution().entries()].map(([delegate, vote]) => {
                     return {
                         delegate,
                         amount: blockReward

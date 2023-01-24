@@ -76,7 +76,7 @@ export class menu {
             if (wallet.hasVoted()) {
                 const votes = wallet.getVoteDistribution();
                 answer += "Vote(s):\n";
-                for (const vote in votes) {
+                for (const [vote, {percent}] of votes.entries()) {
                     const delegate: Contracts.State.Wallet = this.wallets.findByUsername(vote);
                     answer += `--${delegate.getAttribute("delegate.username")}`;
                     if (delegate.hasAttribute("delegate.resigned") && delegate.getAttribute("delegate.resigned")) {
@@ -84,7 +84,7 @@ export class menu {
                     } else if (delegate.getAttribute("delegate.rank") > 51) {
                         answer += " (Not Forging)";
                     }
-                    answer += `: ${votes[vote].percent}%\n`;
+                    answer += `: ${percent}%\n`;
                 }
             }
             if (i < 2) {
