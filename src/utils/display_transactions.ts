@@ -200,7 +200,7 @@ export class display_transactions {
             message.addnl(`🗒️: ${this.memoEncode(tx.memo)}`);
         }
 
-        message.add(`<a href="${this.network.client.explorer}/transactions/${tx.id}">View on explorer</a>`);
+        message.add(`<a href="${this.network.client.explorer}/transaction/${tx.id}">View on explorer</a>`);
     }
 
     private memoEncode(memo: string) {

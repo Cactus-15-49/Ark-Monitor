@@ -61,14 +61,14 @@ export class messageComposer {
         const address = typeof wallet === "string" ? wallet : wallet.getAddress();
         let addressString = `${address.slice(0, 5)}...${address.slice(-5)}`;
         if (link) {
-            addressString = `<a href="${link}/wallets/${address}">${addressString}</a>`;
+            addressString = `<a href="${link}/wallet/${address}">${addressString}</a>`;
         }
         this.add(addressString);
         return this;
     }
 
     public addDelegate(username: string, address: string, link: string) {
-        this.add(`<a href="${link}/wallets/${address}">${username}</a>`);
+        this.add(`<a href="${link}/wallet/${address}">${username}</a>`);
         return this;
     }
 
